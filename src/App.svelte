@@ -8,8 +8,8 @@
   let running = $state(false);
   let error = $state<string | null>(null);
   let isFixture = $state(true);
-  const referencedEvidence = (ids: string[]) =>
-    ids
+  const referencedEvidence = (ids: string[] | undefined) =>
+    (Array.isArray(ids) ? ids : [])
       .map((id) => brief.evidence.find((item) => item.id === id))
       .filter((item): item is Evidence => Boolean(item));
   const selectedEvidence = () =>
