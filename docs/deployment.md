@@ -1,6 +1,6 @@
 # Deployment
 
-`npm run build` produces one svelte-hono Worker bundle and content-hashed hydration assets in `dist/`. The public default uses a `workers.dev` URL so a fresh clone can prove the app without editing account IDs into source.
+`npm run build` produces one svelte-hono Worker bundle and content-hashed hydration assets in `dist/`. The reference deployment uses `orbit.coey.dev` as a custom domain without pinning an account ID in source. Forks should replace or remove that route before deployment.
 
 ```bash
 npm ci
@@ -8,6 +8,8 @@ npm run check
 npx wrangler login
 npm run deploy
 ```
+
+The hosted public demo accepts only the checked-in bounded example spec. Generic or private specs belong behind an authenticated `createHttpApp()` policy boundary.
 
 For a private/team deployment:
 

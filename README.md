@@ -2,7 +2,7 @@
 
 **Watch sources. Keep evidence. Get a brief.**
 
-Orbit runs the same bounded monitoring spec from a terminal, an agent skill, `loops.yaml`, or a Cloudflare Worker. Adapters collect changing sources into one evidence contract. Lenses turn that evidence into sourced claims, visible gaps, and proposed actions. Nothing acts without approval.
+Orbit runs the same bounded monitoring spec from a terminal, an agent skill, `loops.yaml`, or a Cloudflare Worker. The public demo runs at [orbit.coey.dev](https://orbit.coey.dev). Adapters collect changing sources into one evidence contract. Lenses turn that evidence into sourced claims, visible gaps, and proposed actions. Nothing acts without approval.
 
 ```text
 adapters → evidence → lenses → brief → outcome
