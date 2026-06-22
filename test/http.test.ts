@@ -9,6 +9,7 @@ const brief: Brief = {
   specName: "Test",
   startedAt: "2026-01-01T00:00:00.000Z",
   completedAt: "2026-01-01T00:00:01.000Z",
+  sourceReceipts: [],
   evidence: [],
   claims: [],
   gaps: [],

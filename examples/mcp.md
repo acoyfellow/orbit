@@ -1,6 +1,6 @@
 # MCP dogfood
 
-Orbit exposes a narrow JSON-RPC endpoint at `POST /mcp`. After `initialize`, discover `get_example_spec`, `run_public_spec`, and `render_markdown` with `tools/list` and invoke them with `tools/call`.
+Orbit exposes a minimal, non-mutating JSON-RPC subset (not broad MCP conformance) at `POST /mcp`. After `initialize`, discover `get_example_spec`, `run_public_spec`, and `render_markdown` with `tools/list` and invoke them with `tools/call`.
 
 ```json
 {
@@ -11,4 +11,4 @@ Orbit exposes a narrow JSON-RPC endpoint at `POST /mcp`. After `initialize`, dis
 }
 ```
 
-Pass that tool's structured spec to `run_public_spec`, then pass the returned structured brief to `render_markdown`. The endpoint has no action, credential, private-source, or persistence tools.
+Pass that tool's structured spec to `run_public_spec`, then pass the returned structured brief to `render_markdown`. Those are the only methods and tools supported. The endpoint has no arbitrary-spec, action, outcome, credential, private-source, or persistence tools.

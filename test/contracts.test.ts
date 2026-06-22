@@ -11,7 +11,7 @@ import { validateOutcome } from "../src/outcome.js";
 const outcome: Outcome = {
   version: 1,
   runId: "run_0123456789abcdef",
-  status: "accepted",
+  status: "worth-follow-up",
   recordedAt: "2026-06-22T00:00:00.000Z",
   summary: "Shipped after review.",
 };

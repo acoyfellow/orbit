@@ -14,7 +14,11 @@ export function validateOutcome(value: unknown): asserts value is Outcome {
     !/^run_[a-f0-9]{16}$/.test(value.runId)
   )
     throw new Error("invalid outcome runId");
-  if (!["accepted", "rejected", "no-action"].includes(value.status as string))
+  if (
+    !["worth-follow-up", "not-relevant", "no-action"].includes(
+      value.status as string,
+    )
+  )
     throw new Error("invalid outcome status");
   for (const key of ["recordedAt", "summary"])
     if (

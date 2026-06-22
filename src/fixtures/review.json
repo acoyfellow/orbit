@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "runId": "run_checked_in_example",
+  "runId": "run_0000000000000000",
   "specName": "Review surface example",
   "startedAt": "2026-06-22T00:00:00.000Z",
   "completedAt": "2026-06-22T00:00:01.000Z",
@@ -35,9 +35,20 @@
   "proposals": [
     {
       "id": "proposal_1",
-      "text": "Approve running the public example locally.",
+      "text": "Run the public example locally if you want current evidence.",
       "evidenceIds": ["ev_example"],
       "approvalRequired": true
+    }
+  ],
+  "sourceReceipts": [
+    {
+      "sourceId": "fixture",
+      "sourceUrl": "https://example.com/",
+      "status": "complete",
+      "collectedItems": 1,
+      "maxItems": 1,
+      "truncated": false,
+      "detail": "Illustrative fixture; run the public example for current receipts."
     }
   ]
 }

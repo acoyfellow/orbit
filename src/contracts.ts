@@ -69,12 +69,22 @@ export interface Proposal {
   id: string;
   text: string;
   evidenceIds: string[];
+  /** Legacy wire field: signals human review, never authorization or execution. */
   approvalRequired: true;
+}
+export interface SourceReceipt {
+  sourceId: string;
+  sourceUrl: string;
+  status: "complete" | "partial" | "degraded";
+  collectedItems: number;
+  maxItems: number;
+  truncated: boolean;
+  detail?: string;
 }
 export interface Outcome {
   version: 1;
   runId: string;
-  status: "accepted" | "rejected" | "no-action";
+  status: "worth-follow-up" | "not-relevant" | "no-action";
   recordedAt: string;
   summary: string;
 }
@@ -89,6 +99,7 @@ export interface Brief {
   specName: string;
   startedAt: string;
   completedAt: string;
+  sourceReceipts: SourceReceipt[];
   evidence: Evidence[];
   claims: Claim[];
   gaps: Gap[];

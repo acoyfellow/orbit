@@ -11,6 +11,11 @@
   let running = $state(false);
   let error = $state<string | null>(null);
   let copiedProposal = $state<string | null>(null);
+  let outcomeStatus = $state<"worth-follow-up" | "not-relevant" | "no-action">(
+    "worth-follow-up",
+  );
+  let outcomeSummary = $state("");
+  let copiedOutcome = $state(false);
   let isFixture = $state(true);
   const referencedEvidence = (ids: string[] | undefined) =>
     (Array.isArray(ids) ? ids : [])
@@ -74,6 +79,38 @@
       error = "Could not copy the suggestion.";
     }
   }
+  function outcomeJson() {
+    return JSON.stringify(
+      {
+        version: 1,
+        runId: brief.runId,
+        status: outcomeStatus,
+        recordedAt: new Date().toISOString(),
+        summary: outcomeSummary.trim() || `Manual review: ${outcomeStatus}.`,
+      },
+      null,
+      2,
+    );
+  }
+  async function copyOutcome() {
+    try {
+      await navigator.clipboard.writeText(outcomeJson());
+      copiedOutcome = true;
+      window.setTimeout(() => (copiedOutcome = false), 1800);
+    } catch {
+      error = "Could not copy the outcome JSON.";
+    }
+  }
+  function downloadOutcome() {
+    const url = URL.createObjectURL(
+      new Blob([outcomeJson() + "\n"], { type: "application/json" }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${brief.runId}-outcome.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
   async function runExample() {
     running = true;
     error = null;
@@ -108,8 +145,22 @@
 >
 <header>
   <div>
-    <span class="brand">ORBIT / REVIEW</span>
-    <h1>{brief.specName}</h1>
+    <span class="brand">ORBIT</span>
+    <h1>Know what changed—and what deserves a closer look.</h1>
+    <p class="lede">
+      Collect recent releases from OpenAI Agents JS and the Model Context
+      Protocol TypeScript SDK, plus Cloudflare engineering posts. Every finding
+      stays linked to its public source.
+    </p>
+    <nav aria-label="Project links">
+      <a href="https://github.com/acoyfellow/orbit">GitHub</a><a
+        href="https://github.com/acoyfellow/orbit/blob/main/src/contracts.ts"
+        >Specification</a
+      ><a href="https://github.com/acoyfellow/orbit/tree/main/docs">Docs</a><a
+        href="https://github.com/acoyfellow/orbit/blob/main/docs/security.md"
+        >Security</a
+      >
+    </nav>
   </div>
   <div class="controls">
     <span class:live={!isFixture}
@@ -118,7 +169,9 @@
         : "Current public run"}</span
     >
     <button class="run" onclick={runExample} disabled={running}
-      >{running ? "Collecting public evidence…" : "Run public example"}</button
+      >{running
+        ? "Collecting public evidence…"
+        : "Collect latest changes"}</button
     >
   </div>
 </header>
@@ -151,6 +204,36 @@
     {error} The fixture remains visible.
   </div>{/if}
 <main aria-busy={running}>
+  {#if !isFixture}<section class="payoff">
+      <div class="eyebrow">Your latest brief is ready</div>
+      <h2>
+        {brief.claims.length} findings from {brief.sourceReceipts.length} monitored
+        sources
+      </h2>
+      <p>
+        Open each finding’s evidence, note generated gaps, then record your
+        manual decision below.
+      </p>
+    </section>{/if}
+  <section class="receipts">
+    <div class="eyebrow">Monitored sources and collection receipts</div>
+    <div class="receipt-grid">
+      {#each brief.sourceReceipts as receipt}<article>
+          <strong>{receipt.sourceId}</strong><span>{receipt.status}</span>
+          <p>
+            {receipt.collectedItems} of at most {receipt.maxItems} items collected.
+          </p>
+          {#if receipt.truncated}<p>
+              <b>Truncated:</b>
+              {receipt.detail}
+            </p>{/if}<a
+            href={receipt.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer">Open source endpoint ↗</a
+          >
+        </article>{/each}
+    </div>
+  </section>
   <section class="run-summary" aria-labelledby="run-summary-heading">
     <div class="eyebrow" id="run-summary-heading">Pipeline / run summary</div>
     <dl>
@@ -192,7 +275,7 @@
   {#if coverage().lanes.length > 0}
     <section class="coverage" aria-labelledby="coverage-heading">
       <div class="eyebrow" id="coverage-heading">
-        Coverage · grouped by declared topic × source type
+        Collected evidence distribution
       </div>
       <p>
         Counts show coverage only—not quality or support. Cells are lossy;
@@ -294,7 +377,8 @@
         <a
           href={item.itemUrl ?? item.sourceUrl}
           target="_blank"
-          rel="noopener noreferrer">Open source ↗</a
+          rel="noopener noreferrer"
+          >Open item (or endpoint when no item link exists) ↗</a
         >
       </section>{/if}
   </aside>
@@ -302,7 +386,8 @@
     <div>
       <div class="eyebrow">Missing coverage</div>
       {#if brief.gaps.length === 0}<p class="empty">
-          No gaps were identified.
+          This lens generated no gaps from the collected evidence; this is not
+          proof that no gaps exist.
         </p>{/if}{#each brief.gaps as gap}<article>
           <p>{gap.text}</p>
           {@render EvidenceControls(gap.evidenceIds)}
@@ -316,7 +401,7 @@
       {#if brief.proposals.length === 0}<p class="empty">
           No follow-ups were suggested.
         </p>{/if}{#each brief.proposals as proposal}<article class="proposal">
-          <span>Not executed</span>
+          <span>Review note · not executed</span>
           <h3>{proposal.text}</h3>
           {@render EvidenceControls(proposal.evidenceIds)}
           <button
@@ -326,6 +411,39 @@
             {copiedProposal === proposal.id ? "Copied" : "Copy suggestion"}
           </button>
         </article>{/each}
+    </div>
+  </section>
+  <section class="outcome">
+    <div class="eyebrow">Record your manual review outcome</div>
+    <p>
+      This creates valid Outcome JSON tied to <code>{brief.runId}</code>. It is
+      only copied or downloaded in your browser; Orbit does not send or store
+      it.
+    </p>
+    <fieldset>
+      <legend>Decision</legend><label
+        ><input
+          type="radio"
+          bind:group={outcomeStatus}
+          value="worth-follow-up"
+        /> Worth follow-up</label
+      ><label
+        ><input type="radio" bind:group={outcomeStatus} value="not-relevant" /> Not
+        relevant</label
+      ><label
+        ><input type="radio" bind:group={outcomeStatus} value="no-action" /> No action</label
+      >
+    </fieldset>
+    <label for="outcome-summary">Review note</label><textarea
+      id="outcome-summary"
+      bind:value={outcomeSummary}
+      maxlength="2000"
+      placeholder="Why did you make this decision?"
+    ></textarea>
+    <div class="outcome-actions">
+      <button onclick={copyOutcome}
+        >{copiedOutcome ? "Copied" : "Copy Outcome JSON"}</button
+      ><button onclick={downloadOutcome}>Download Outcome JSON</button>
     </div>
   </section>
 </main>
@@ -372,6 +490,20 @@
     gap: 24px;
     padding: 54px 24px 28px;
     border-bottom: 1px solid #a8aea7;
+  }
+  .lede {
+    max-width: 700px;
+    color: #4f5c56;
+    font-size: 17px;
+  }
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  nav a {
+    color: #173f30;
+    font-weight: 700;
   }
   .brand,
   .eyebrow {
@@ -466,6 +598,32 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 34px;
+  }
+  .payoff,
+  .receipts,
+  .outcome {
+    grid-column: 1/-1;
+  }
+  .payoff {
+    padding: 22px;
+    background: #e2eee7;
+    border: 1px solid #a7b9ad;
+  }
+  .receipt-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .receipt-grid article {
+    padding: 14px;
+    background: #fff;
+    border: 1px solid #c8cbc5;
+  }
+  .receipt-grid span {
+    float: right;
+    text-transform: uppercase;
+    font-size: 10px;
+    font-weight: 800;
   }
   .run-summary,
   .coverage {
@@ -640,6 +798,32 @@
   .copy-suggestion:hover {
     background: #fff;
   }
+  .outcome fieldset {
+    border: 0;
+    padding: 0;
+    margin: 16px 0;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .outcome textarea {
+    display: block;
+    width: 100%;
+    min-height: 90px;
+    margin: 6px 0 12px;
+    padding: 10px;
+    font: inherit;
+  }
+  .outcome-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .outcome-actions button {
+    padding: 9px 12px;
+    border: 1px solid #173f30;
+    background: #fff;
+    font-weight: 700;
+  }
   .empty {
     color: #67716c;
     font-style: italic;
@@ -690,6 +874,9 @@
     main {
       grid-template-columns: minmax(0, 1fr);
       gap: 28px;
+    }
+    .receipt-grid {
+      grid-template-columns: 1fr;
     }
     .run-summary,
     .coverage {

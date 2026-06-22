@@ -9,17 +9,16 @@ export async function run(value: unknown): Promise<Brief> {
   validateSpec(value);
   const spec: RunSpec = value;
   const startedAt = new Date().toISOString();
-  const evidence = (
-    await Promise.all(
-      spec.sources.map((s) =>
-        s.type === "json"
-          ? collectJson(s, spec.limits)
-          : s.type === "rss"
-            ? collectRss(s, spec.limits)
-            : collectGitHubReleases(s, spec.limits),
-      ),
-    )
-  )
+  const collectedBySource = await Promise.all(
+    spec.sources.map((s) =>
+      s.type === "json"
+        ? collectJson(s, spec.limits)
+        : s.type === "rss"
+          ? collectRss(s, spec.limits)
+          : collectGitHubReleases(s, spec.limits),
+    ),
+  );
+  const evidence = collectedBySource
     .flat()
     .sort(
       (a, b) =>
@@ -33,6 +32,27 @@ export async function run(value: unknown): Promise<Brief> {
     specName: spec.name,
     startedAt,
     completedAt: new Date().toISOString(),
+    sourceReceipts: spec.sources.map((source, index) => {
+      const collectedItems = collectedBySource[index]?.length ?? 0;
+      const truncated = collectedItems >= source.maxItems;
+      const sourceUrl =
+        source.type === "github-releases"
+          ? `https://api.github.com/repos/${source.owner}/${source.repo}/releases?per_page=${source.maxItems}`
+          : source.url;
+      return {
+        sourceId: source.id,
+        sourceUrl,
+        status: truncated ? ("partial" as const) : ("complete" as const),
+        collectedItems,
+        maxItems: source.maxItems,
+        truncated,
+        ...(truncated
+          ? {
+              detail: `Collection stopped at the configured maxItems limit (${source.maxItems}); more upstream items may exist.`,
+            }
+          : {}),
+      };
+    }),
     evidence,
     ...result,
   };

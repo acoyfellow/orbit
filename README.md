@@ -1,74 +1,90 @@
 # Orbit
 
-**Watch sources. Keep evidence. Get a brief.**
+**Know what changed—and what deserves a closer look.**
 
-Orbit runs the same bounded monitoring spec from a terminal, an agent skill, `loops.yaml`, or a Cloudflare Worker. The public demo runs at [orbit.coey.dev](https://orbit.coey.dev). Adapters collect changing sources into one evidence contract. Lenses turn that evidence into sourced claims, visible gaps, and proposed actions. Nothing acts without approval.
+Orbit collects bounded public sources, preserves evidence and source health, generates a review brief, and lets a person record a portable decision. The checked-in example watches releases from **OpenAI Agents JS** and the **Model Context Protocol TypeScript SDK**, plus the **Cloudflare engineering RSS feed**.
 
 ```text
-adapters → evidence → lenses → brief → outcome
+adapter → evidence → lens → brief → outcome
 ```
+
+[Live demo](https://orbit.coey.dev) · [Specification](src/contracts.ts) · [Docs](docs/) · [Security](docs/security.md)
+
+Orbit never executes a follow-up. The hosted demo does not persist runs or outcomes.
+
+## Run from a clone
+
+Requires Node 20+.
 
 ```bash
-npm install
-npm run orbit -- run examples/public-web.json
+git clone https://github.com/acoyfellow/orbit.git
+cd orbit
+npm ci
+npm run orbit -- run examples/public-web.json orbit-output
 ```
 
-That example monitors releases from real agent/tooling repositories and a public engineering RSS feed, preserves source URL, retrieval time and content digest, then writes the same portable brief shape used by the API and skill. Generic JSON remains available for other public APIs.
-
-## What ships in 0.0.1
-
-- one serializable run specification;
-- first-class GitHub releases plus generic public JSON and RSS adapters;
-- deterministic summary/filter and evidence-to-action lenses;
-- content-addressed evidence with explicit provenance and bounded operator-declared lanes;
-- JSON and Markdown briefs;
-- a small CLI, HTTP API, Svelte review surface, read-only MCP endpoint, agent skill and `loops.yaml` example;
-- Cloudflare-ready D1/R2/Workers AI/Workflow boundaries without requiring them for the local example;
-- approval-required action proposals—never ambient mutation.
-
-## Repository map
+Expected final line:
 
 ```text
-src/contracts.ts       portable public records
-src/kernel/            collect, validate, digest, run
-src/adapters/          source-specific collection only
-src/lenses/            interpretation only
-src/cli.ts             local interface
-src/worker.ts          Hono API + svelte-hono page
-src/App.svelte         review surface
-skills/orbit/SKILL.md  agent interface
-examples/              runnable specs and loops.yaml
-docs/                  architecture, adapters, security, deploy
+Wrote orbit-output/brief.json and orbit-output/brief.md for run_<16 hex characters> (<count> evidence)
 ```
+
+The command performs real network requests, so counts and the run ID vary. Inspect `orbit-output/brief.json`: each source has a `sourceReceipt` showing complete/partial/degraded collection and explicit truncation, while each evidence item distinguishes the collection `sourceUrl` endpoint from its optional human-facing `itemUrl`.
+
+Local review UI:
+
+```bash
+npm run dev
+```
+
+Open the URL printed by Wrangler, choose **Collect latest changes**, inspect source receipts and evidence, then copy or download an Outcome JSON. Decisions remain in the browser unless you explicitly save them.
+
+## Run the package CLI
+
+This path does not require cloning Orbit:
+
+```bash
+mkdir orbit-quickstart && cd orbit-quickstart
+curl -fsSLO https://raw.githubusercontent.com/acoyfellow/orbit/main/examples/public-web.json
+npx --yes @acoyfellow/orbit@0.0.1 run public-web.json orbit-output
+```
+
+Expect the same `Wrote ... brief.json ... brief.md` line and files. If `0.0.1` is not available from your configured registry, use the clone path; repository support does not imply registry availability.
+
+## What the brief means
+
+- **Source receipts** report each endpoint, item count, configured cap, status, and truncation. A capped source is `partial`; Orbit does not claim complete upstream knowledge.
+- **Claims** cite evidence IDs.
+- **Generated gaps** are lens output, not proof of absence. Zero generated gaps never means “nothing is missing.”
+- **Collected evidence distribution** groups collected items by operator-declared lane and adapter. It is not quality, relevance, or comprehensive coverage.
+- **Review notes** are suggestions only. Manual decisions are `worth-follow-up`, `not-relevant`, or `no-action` Outcome JSON tied to the brief `runId`.
 
 ## Interfaces
 
 ```bash
-orbit run spec.json
-orbit brief run.json --format markdown
-orbit record-outcome outcome.json orbit-output/outcomes.jsonl
+orbit run spec.json [output-directory]
+orbit brief brief.json --format markdown
+orbit record-outcome outcome.json local-outcomes.jsonl
 ```
 
-Agents use the checked-in skill. Scheduled shells use the checked-in [`loops.yaml` example](examples/loops.yaml) with [loops-yaml](https://github.com/acoyfellow/loops-yaml). Hosted clients use the same run and brief contracts over HTTP. Re-running unchanged content in the same CLI output directory preserves the existing content-addressed brief (including its original timestamps) and reports `Reused`; changed content replaces it. `record-outcome` validates a version `1` outcome tied to a `run_<digest>` ID and appends it to the explicitly requested local JSONL ledger—there is no implicit or hosted persistence.
+The repository skill, package CLI, `examples/loops.yaml`, HTTP API, and hosted demo use the same versioned contracts. The CLI only appends an outcome when you explicitly invoke `record-outcome` with a local ledger path.
+
+The hosted `POST /mcp` interface is a **minimal non-mutating subset**, not general MCP conformance: JSON-RPC `initialize`, `tools/list`, and `tools/call`, with exactly `get_example_spec`, `run_public_spec`, and `render_markdown`. It has no credentials, private sources, arbitrary specs, actions, outcome recording, or persistence.
+
+## Limits and security
+
+Version 1 accepts public HTTPS JSON/RSS and validated unauthenticated GitHub release sources. Specs allow at most 20 sources, 1,000,000 bytes per source, 100 items per source, and a 30-second source timeout; a deployment may impose tighter limits. Redirects and private/non-HTTPS addresses are rejected. The public Worker runs only the exact checked-in example. DNS rebinding controls, authentication, retention, credentials, and private-source access remain deployment responsibilities.
+
+See [Architecture](docs/architecture.md), [Adapters](docs/adapters.md), [Deployment](docs/deployment.md), and the dated [proof receipt](docs/proof.md).
+
+## Development
 
 ```bash
-loops run orbit-public-web   # one dogfood run
-loops watch                  # honor the checked-in cron schedule
+npm ci
+npm run check
 ```
 
-My AX can connect to `https://orbit.coey.dev/mcp` as a read-only MCP server, call `get_example_spec` then `run_public_spec`, and retain the returned brief or Markdown without importing Orbit code. The portable `createHttpApp()` disables execution by default: a deployment must explicitly inject a runner that enforces its authentication and spec policy. The public Worker injects a runner that accepts only the exact checked-in example. The review page starts with a clearly labelled illustrative fixture; **Run public example** fetches the checked-in spec from `GET /api/example`, submits it to `POST /api/runs`, and replaces the fixture with current public evidence. Its compact run summary distinguishes unavailable fixture pipeline metadata from live adapter/source/lens data, and reports timing and output counts. A compact coverage matrix groups counts and empty gaps by explicitly labelled, operator-declared **lane × adapter** dimensions; selecting a cell filters the ledger and drills into evidence. Coverage is intentionally separate from quality/support and is not a score. Changes, missing coverage, and suggested follow-ups all link to a selected evidence detail with summary, source, retrieval time, visibility, digest, and a separate public-source link. See the [research note](docs/research/quality-diversity-coverage.md) for paper claims and the narrower Orbit inference.
-
-A narrow Streamable HTTP-style MCP endpoint is available at `POST /mcp`. It supports `initialize`, `tools/list`, and `tools/call` for `get_example_spec`, `run_public_spec`, and `render_markdown`. These tools only discover, collect bounded public sources, or format a supplied brief—there are no credentials, persistence, approvals, or action tools. The webpage presents follow-ups as copyable review notes marked **Not executed**; there is no approval queue.
-
-## Security
-
-The shipped public adapters have no credential input. The GitHub releases adapter derives the versioned `api.github.com/repos/{owner}/{repo}/releases` endpoint from validated owner/repository names, identifies Orbit with a `User-Agent`, and stays within GitHub's unauthenticated public rate limit. Orbit caps request bodies while streaming (including bodies without `Content-Length`), caps source response streams before decoding, strictly validates specs and Markdown briefs, never writes response headers to evidence, and proposes actions rather than executing them. Baseline browser security headers are applied by the Hono app. Authentication, DNS-resolution/egress controls, retention, and credential isolation remain deployment responsibilities; public examples use public sources and deterministic lenses.
-
-See [Security](docs/security.md), [Architecture](docs/architecture.md), and the [deployed proof receipt](docs/proof.md).
-
-## Status
-
-Orbit is `0.0.1` while its contracts are being proven. The goal is a small, reusable reference—not an adapter marketplace or autonomous agent platform.
+`npm run check` runs formatting, tests, build, typecheck, package dry-run, and an extracted-package CLI smoke test. Orbit is a narrow `svelte-hono` reference implementation, not an agent runtime, workflow builder, database, or autonomous action system.
 
 ## License
 

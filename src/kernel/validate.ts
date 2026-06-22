@@ -118,6 +118,7 @@ export function validateBrief(value: unknown): asserts value is Brief {
       "specName",
       "startedAt",
       "completedAt",
+      "sourceReceipts",
       "evidence",
       "claims",
       "gaps",
@@ -129,12 +130,39 @@ export function validateBrief(value: unknown): asserts value is Brief {
   for (const key of ["runId", "specName", "startedAt", "completedAt"])
     text(value[key], `brief ${key}`);
   if (
+    !Array.isArray(value.sourceReceipts) ||
     !Array.isArray(value.evidence) ||
     !Array.isArray(value.claims) ||
     !Array.isArray(value.gaps) ||
     !Array.isArray(value.proposals)
   )
     throw new Error("invalid brief collections");
+  for (const receipt of value.sourceReceipts) {
+    if (!object(receipt)) throw new Error("invalid source receipt");
+    exact(
+      receipt,
+      [
+        "sourceId",
+        "sourceUrl",
+        "status",
+        "collectedItems",
+        "maxItems",
+        "truncated",
+        "detail",
+      ],
+      "source receipt",
+    );
+    text(receipt.sourceId, "receipt sourceId");
+    text(receipt.sourceUrl, "receipt sourceUrl");
+    if (
+      !["complete", "partial", "degraded"].includes(receipt.status as string) ||
+      !Number.isInteger(receipt.collectedItems) ||
+      !Number.isInteger(receipt.maxItems) ||
+      typeof receipt.truncated !== "boolean"
+    )
+      throw new Error("invalid source receipt fields");
+    if (receipt.detail !== undefined) text(receipt.detail, "receipt detail");
+  }
   for (const evidence of value.evidence) {
     if (!object(evidence)) throw new Error("invalid evidence");
     exact(
