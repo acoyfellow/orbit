@@ -1,13 +1,23 @@
 <script lang="ts">
-  import type { Brief, RunSpec } from "./contracts.js";
+  import type { Brief, Evidence, RunSpec } from "./contracts.js";
+  import { summarizeRun } from "./ui-summary.js";
   let { initialBrief }: { initialBrief: Brief } = $props();
   let brief = $state(initialBrief);
+  let runSpec = $state<RunSpec | undefined>();
   let selected = $state<string | null>(brief.evidence[0]?.id ?? null);
   let running = $state(false);
   let error = $state<string | null>(null);
   let isFixture = $state(true);
-  const evidence = (ids: string[]) =>
-    ids.map((id) => brief.evidence.find((e) => e.id === id)).filter(Boolean);
+  const referencedEvidence = (ids: string[]) =>
+    ids
+      .map((id) => brief.evidence.find((item) => item.id === id))
+      .filter((item): item is Evidence => Boolean(item));
+  const selectedEvidence = () =>
+    brief.evidence.find((item) => item.id === selected);
+  const summary = () => summarizeRun(brief, runSpec);
+  function choose(id: string) {
+    selected = id;
+  }
   async function runExample() {
     running = true;
     error = null;
@@ -25,6 +35,7 @@
       if (!response.ok)
         throw new Error("error" in body ? body.error : "Run failed.");
       brief = body as Brief;
+      runSpec = spec;
       selected = brief.evidence[0]?.id ?? null;
       isFixture = false;
     } catch (cause) {
@@ -49,49 +60,134 @@
         ? "Checked-in fixture · not live"
         : "Current public run"}</span
     >
-    <button class="run" onclick={runExample} disabled={running}>
-      {running ? "Collecting public evidence…" : "Run public example"}
-    </button>
+    <button class="run" onclick={runExample} disabled={running}
+      >{running ? "Collecting public evidence…" : "Run public example"}</button
+    >
   </div>
 </header>
+<div class="sr-only" role="status" aria-live="polite">
+  {running
+    ? "Public evidence collection in progress."
+    : error
+      ? "Run failed; fixture remains visible."
+      : isFixture
+        ? "Checked-in fixture displayed."
+        : "Public evidence run complete."}
+</div>
 {#if error}<div class="error" role="alert">
     <b>Run failed.</b>
     {error} The fixture remains visible.
   </div>{/if}
 <main aria-busy={running}>
+  <section class="run-summary" aria-labelledby="run-summary-heading">
+    <div class="eyebrow" id="run-summary-heading">Pipeline / run summary</div>
+    <dl>
+      <div>
+        <dt>Adapters</dt>
+        <dd>
+          {summary().adapters.join(", ") || "Fixture metadata unavailable"}
+        </dd>
+      </div>
+      <div>
+        <dt>Sources</dt>
+        <dd>{summary().sourceCount}</dd>
+      </div>
+      <div>
+        <dt>Timing</dt>
+        <dd>{summary().durationMs} ms</dd>
+      </div>
+      <div>
+        <dt>Lenses</dt>
+        <dd>
+          {summary().lenses.join(" → ") || "Fixture metadata unavailable"}
+        </dd>
+      </div>
+      <div>
+        <dt>Outputs</dt>
+        <dd>
+          {summary().evidenceCount} evidence · {summary().claimCount} claims · {summary()
+            .gapCount} gaps · {summary().proposalCount} proposals
+        </dd>
+      </div>
+    </dl>
+  </section>
   <section>
     <div class="eyebrow">Claims</div>
+    {#if brief.claims.length === 0}<p class="empty">
+        No claims were produced.
+      </p>{/if}
     {#each brief.claims as claim}<article>
         <h2>{claim.text}</h2>
-        <div>
-          {#each evidence(claim.evidenceIds) as e}<button
-              class:active={selected === e?.id}
-              onclick={() => (selected = e?.id)}>{e?.id}</button
-            >{/each}
-        </div>
+        <EvidenceControls ids={claim.evidenceIds} />
       </article>{/each}
   </section>
   <aside>
     <div class="eyebrow">Evidence ledger · {brief.evidence.length}</div>
-    {#each brief.evidence as e}<a
-        class:selected={selected === e.id}
-        href={e.itemUrl ?? e.sourceUrl}
-        target="_blank"
-        rel="noreferrer"
-        ><strong>{e.title}</strong><small>{e.sourceId} · {e.visibility}</small
-        ><code>{e.digest.slice(0, 18)}…</code></a
+    {#if brief.evidence.length === 0}<p class="empty">
+        No evidence was collected for this run.
+      </p>{/if}
+    {#each brief.evidence as item}<button
+        class="ledger-item"
+        class:selected={selected === item.id}
+        aria-pressed={selected === item.id}
+        onclick={() => choose(item.id)}
+        ><strong>{item.title}</strong><small
+          >{item.sourceId} · {item.visibility}</small
+        ><code>{item.digest.slice(0, 18)}…</code></button
       >{/each}
+    {#if selectedEvidence()}{@const item = selectedEvidence()!}
+      <section
+        class="evidence-detail"
+        aria-labelledby="evidence-detail-heading"
+      >
+        <div class="eyebrow" id="evidence-detail-heading">
+          Selected evidence
+        </div>
+        <h3>{item.title}</h3>
+        <p>{item.summary || "No summary supplied."}</p>
+        <dl>
+          <div>
+            <dt>Source</dt>
+            <dd>{item.sourceId}</dd>
+          </div>
+          <div>
+            <dt>Retrieved</dt>
+            <dd>{new Date(item.retrievedAt).toLocaleString()}</dd>
+          </div>
+          <div>
+            <dt>Visibility</dt>
+            <dd>{item.visibility}</dd>
+          </div>
+          <div>
+            <dt>Digest</dt>
+            <dd><code>{item.digest}</code></dd>
+          </div>
+        </dl>
+        <a
+          href={item.itemUrl ?? item.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer">Open source ↗</a
+        >
+      </section>{/if}
   </aside>
   <section class="lower">
     <div>
       <div class="eyebrow">Visible gaps</div>
-      {#each brief.gaps as gap}<p>{gap.text}</p>{/each}
+      {#if brief.gaps.length === 0}<p class="empty">
+          No gaps were identified.
+        </p>{/if}{#each brief.gaps as gap}<article>
+          <p>{gap.text}</p>
+          <EvidenceControls ids={gap.evidenceIds} />
+        </article>{/each}
     </div>
     <div>
-      <div class="eyebrow">Approval queue</div>
-      {#each brief.proposals as p}<article class="proposal">
+      <div class="eyebrow">Proposed actions</div>
+      {#if brief.proposals.length === 0}<p class="empty">
+          No actions were proposed.
+        </p>{/if}{#each brief.proposals as proposal}<article class="proposal">
           <span>Approval required</span>
-          <h3>{p.text}</h3>
+          <h3>{proposal.text}</h3>
+          <EvidenceControls ids={proposal.evidenceIds} />
         </article>{/each}
     </div>
   </section>
@@ -100,6 +196,17 @@
   Completed {new Date(brief.completedAt).toLocaleString()} ·
   <code>{brief.runId}</code> · No actions executed
 </footer>
+
+{#snippet EvidenceControls(ids: string[])}
+  <div class="evidence-controls" aria-label="Supporting evidence">
+    {#if ids.length === 0}<small>No supporting evidence linked.</small>{/if}
+    {#each referencedEvidence(ids) as item}<button
+        class:active={selected === item.id}
+        aria-pressed={selected === item.id}
+        onclick={() => choose(item.id)}>{item.id}</button
+      >{/each}
+  </div>
+{/snippet}
 
 <style>
   :global(*) {
@@ -181,6 +288,29 @@
     grid-template-columns: 2fr 1fr;
     gap: 34px;
   }
+  .run-summary {
+    grid-column: 1/-1;
+    border-bottom: 1px solid #a8aea7;
+    padding-bottom: 20px;
+  }
+  .run-summary dl {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 28px;
+  }
+  .run-summary dl div {
+    min-width: 120px;
+  }
+  .run-summary dt,
+  .evidence-detail dt {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #67716c;
+  }
+  .run-summary dd,
+  .evidence-detail dd {
+    margin: 2px 0 0;
+  }
   article {
     padding: 20px 0;
     border-bottom: 1px solid #c8cbc5;
@@ -191,7 +321,12 @@
       serif;
     margin: 0 0 12px;
   }
-  article button {
+  .evidence-controls {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .evidence-controls button {
     border: 1px solid #aab2ab;
     background: transparent;
     border-radius: 999px;
@@ -199,7 +334,7 @@
     color: #477a61;
     cursor: pointer;
   }
-  article button.active {
+  .evidence-controls button.active {
     background: #173f30;
     color: white;
   }
@@ -207,20 +342,45 @@
     border-left: 1px solid #c8cbc5;
     padding-left: 22px;
   }
-  aside a {
+  .ledger-item {
     display: flex;
+    width: 100%;
+    text-align: left;
     flex-direction: column;
     gap: 4px;
     padding: 14px;
-    text-decoration: none;
+    background: transparent;
     color: inherit;
     border: 1px solid transparent;
     overflow-wrap: anywhere;
+    cursor: pointer;
   }
-  aside a.selected {
+  .ledger-item.selected {
     background: #fff;
     border-color: #bcc4bc;
     box-shadow: 3px 3px 0 #477a61;
+  }
+  .evidence-detail {
+    margin-top: 20px;
+    padding: 18px;
+    background: #fff;
+    border: 1px solid #bcc4bc;
+    overflow-wrap: anywhere;
+  }
+  .evidence-detail h3 {
+    margin: 9px 0;
+  }
+  .evidence-detail dl div {
+    margin: 8px 0;
+  }
+  .evidence-detail dd {
+    margin-left: 0;
+  }
+  .evidence-detail a {
+    display: inline-block;
+    margin-top: 8px;
+    color: #173f30;
+    font-weight: 700;
   }
   small,
   code {
@@ -242,9 +402,29 @@
     padding: 4px 7px;
     border-radius: 2px;
   }
+  .empty {
+    color: #67716c;
+    font-style: italic;
+  }
   footer {
     padding: 22px 24px 50px;
     color: #66716b;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  button:focus-visible,
+  a:focus-visible {
+    outline: 3px solid #d4772c;
+    outline-offset: 3px;
   }
   @media (max-width: 720px) {
     header {
@@ -265,11 +445,19 @@
       grid-template-columns: minmax(0, 1fr);
       gap: 28px;
     }
+    .run-summary {
+      grid-column: auto;
+    }
+    .run-summary dl {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
     aside {
       border: 0;
       padding: 0;
     }
     .lower {
+      grid-column: auto;
       grid-template-columns: minmax(0, 1fr);
     }
     h2 {
