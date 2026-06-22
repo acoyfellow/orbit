@@ -46,10 +46,10 @@ docs/                  architecture, adapters, security, deploy
 ```bash
 orbit run spec.json
 orbit brief run.json --format markdown
-orbit record-outcome outcome.json
+orbit record-outcome outcome.json orbit-output/outcomes.jsonl
 ```
 
-Agents use the checked-in skill. Scheduled shells use the checked-in [`loops.yaml` example](examples/loops.yaml) with [loops-yaml](https://github.com/acoyfellow/loops-yaml). Hosted clients use the same run and brief contracts over HTTP.
+Agents use the checked-in skill. Scheduled shells use the checked-in [`loops.yaml` example](examples/loops.yaml) with [loops-yaml](https://github.com/acoyfellow/loops-yaml). Hosted clients use the same run and brief contracts over HTTP. Re-running unchanged content in the same CLI output directory preserves the existing content-addressed brief (including its original timestamps) and reports `Reused`; changed content replaces it. `record-outcome` validates a version `1` outcome tied to a `run_<digest>` ID and appends it to the explicitly requested local JSONL ledger—there is no implicit or hosted persistence.
 
 ```bash
 loops run orbit-public-web   # one dogfood run

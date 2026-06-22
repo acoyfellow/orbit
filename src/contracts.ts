@@ -71,6 +71,18 @@ export interface Proposal {
   evidenceIds: string[];
   approvalRequired: true;
 }
+export interface Outcome {
+  version: 1;
+  runId: string;
+  status: "accepted" | "rejected" | "no-action";
+  recordedAt: string;
+  summary: string;
+}
+export type Analysis = Pick<Brief, "claims" | "gaps" | "proposals">;
+/** A host-supplied seam: Orbit does not select a model or provide bindings. */
+export type Analyzer = (
+  evidence: readonly Evidence[],
+) => Promise<Analysis> | Analysis;
 export interface Brief {
   version: 1;
   runId: string;
