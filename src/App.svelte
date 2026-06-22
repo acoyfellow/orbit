@@ -529,6 +529,14 @@
     grid-template-columns: 2fr 1fr;
     gap: 34px;
   }
+  main > * {
+    min-width: 0;
+  }
+  h2,
+  .ledger-item strong,
+  .evidence-detail h3 {
+    overflow-wrap: anywhere;
+  }
   .payoff,
   .receipts,
   .outcome {
