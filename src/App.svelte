@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Brief, Evidence, RunSpec } from "./contracts.js";
-  import { summarizeRun } from "./ui-summary.js";
   let { initialBrief }: { initialBrief: Brief } = $props();
   let brief = $state(initialBrief);
   let runSpec = $state<RunSpec | undefined>();
@@ -14,7 +13,32 @@
       .filter((item): item is Evidence => Boolean(item));
   const selectedEvidence = () =>
     brief.evidence.find((item) => item.id === selected);
-  const summary = () => summarizeRun(brief, runSpec);
+  // Keep this projection inside the component: svelte-hono bundles component
+  // dependencies independently for SSR and hydration, while the pure helper is
+  // retained separately for contract tests.
+  const summary = () => {
+    const spec =
+      runSpec && Array.isArray(runSpec.sources) && Array.isArray(runSpec.lenses)
+        ? runSpec
+        : undefined;
+    const started = Date.parse(brief.startedAt);
+    const completed = Date.parse(brief.completedAt);
+    return {
+      adapters: [...new Set(spec?.sources.map((source) => source.type) ?? [])],
+      sourceCount:
+        spec?.sources.length ??
+        new Set(brief.evidence.map((item) => item.sourceId)).size,
+      durationMs:
+        Number.isFinite(started) && Number.isFinite(completed)
+          ? Math.max(0, completed - started)
+          : 0,
+      lenses: spec?.lenses.map((lens) => lens.type) ?? [],
+      evidenceCount: brief.evidence.length,
+      claimCount: brief.claims.length,
+      gapCount: brief.gaps.length,
+      proposalCount: brief.proposals.length,
+    };
+  };
   function choose(id: string) {
     selected = id;
   }
