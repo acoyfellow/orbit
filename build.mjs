@@ -7,7 +7,7 @@ await build({
   outdir: "dist",
   platform: "node",
   format: "esm",
-  bundle: false,
+  bundle: true,
   packages: "external",
   sourcemap: true,
 });

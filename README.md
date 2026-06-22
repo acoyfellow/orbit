@@ -49,13 +49,13 @@ orbit brief run.json --format markdown
 orbit record-outcome outcome.json
 ```
 
-Agents use the checked-in skill. Scheduled shells use the checked-in `loops.yaml` example. Hosted clients use the same run and brief contracts over HTTP. The review page starts with a clearly labelled illustrative fixture; **Run public example** fetches the checked-in spec from `GET /api/example`, submits it to `POST /api/runs`, and replaces the fixture with current public evidence.
+Agents use the checked-in skill. Scheduled shells use the checked-in `loops.yaml` example. Hosted clients use the same run and brief contracts over HTTP. The portable `createHttpApp()` disables execution by default: a deployment must explicitly inject a runner that enforces its authentication and spec policy. The public Worker injects a runner that accepts only the exact checked-in example. The review page starts with a clearly labelled illustrative fixture; **Run public example** fetches the checked-in spec from `GET /api/example`, submits it to `POST /api/runs`, and replaces the fixture with current public evidence.
 
 A narrow Streamable HTTP-style MCP endpoint is available at `POST /mcp`. It supports `initialize`, `tools/list`, and `tools/call` for `get_example_spec`, `run_public_spec`, and `render_markdown`. These tools only discover, collect bounded public sources, or format a supplied brief—there are no credentials, persistence, approvals, or action tools.
 
 ## Security
 
-Adapters receive only their declared configuration and credentials. Orbit minimizes source payloads before analysis, never writes authorization headers to evidence, marks public/private visibility on every record, and proposes actions rather than executing them. Hosted deployments should require Cloudflare Access; public examples use public sources and deterministic lenses.
+The shipped public adapters have no credential input. Orbit caps request bodies while streaming (including bodies without `Content-Length`), caps source response streams before decoding, strictly validates specs and Markdown briefs, never writes response headers to evidence, and proposes actions rather than executing them. Baseline browser security headers are applied by the Hono app. Authentication, DNS-resolution/egress controls, retention, and credential isolation remain deployment responsibilities; public examples use public sources and deterministic lenses.
 
 See [Security](docs/security.md) and [Architecture](docs/architecture.md).
 

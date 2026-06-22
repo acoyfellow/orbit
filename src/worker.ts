@@ -12,11 +12,13 @@ import { createHttpApp } from "./http-app.js";
 // skill, and library remain generic; private deployments can construct
 // createHttpApp() with their own authenticated policy boundary.
 const exampleDigest = canonical(publicExample);
-const app = createHttpApp(async (value) => {
-  if (canonical(value) !== exampleDigest) {
-    throw new Error("The public demo runs only the checked-in example spec.");
-  }
-  return run(value);
+const app = createHttpApp({
+  runner: async (value) => {
+    if (canonical(value) !== exampleDigest) {
+      throw new Error("The public demo runs only the checked-in example spec.");
+    }
+    return run(value);
+  },
 });
 attachSvelteRoutes(app, { bundles });
 app.get(

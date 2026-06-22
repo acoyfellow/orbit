@@ -62,6 +62,57 @@ for (const url of [
   });
 }
 
+test("rejects incomplete and unknown spec fields", async () => {
+  await assert.rejects(
+    run({ version: 1, name: "x", sources: [], lenses: [], limits: {} }),
+    /invalid maxSources/,
+  );
+  await assert.rejects(
+    run({
+      version: 1,
+      name: "x",
+      unknown: true,
+      sources: [],
+      lenses: [
+        { type: "filter-summary", maxClaims: 1 },
+        { type: "evidence-actions", maxProposals: 1 },
+      ],
+      limits: { maxSources: 1, maxBytesPerSource: 10, timeoutMs: 10 },
+    }),
+    /unknown property/,
+  );
+});
+
+test("stops reading a chunked source once its byte cap is exceeded", async () => {
+  let pulls = 0;
+  globalThis.fetch = async () =>
+    new Response(
+      new ReadableStream({
+        pull(controller) {
+          pulls += 1;
+          controller.enqueue(new Uint8Array(8));
+          if (pulls === 10) controller.close();
+        },
+      }),
+    );
+  await assert.rejects(
+    run({
+      version: 1,
+      name: "stream",
+      sources: [
+        { id: "x", type: "json", url: "https://example.com", maxItems: 1 },
+      ],
+      lenses: [
+        { type: "filter-summary", maxClaims: 1 },
+        { type: "evidence-actions", maxProposals: 1 },
+      ],
+      limits: { maxSources: 1, maxBytesPerSource: 10, timeoutMs: 1000 },
+    }),
+    /response too large/,
+  );
+  assert.ok(pulls < 10);
+});
+
 test("does not follow source redirects", async () => {
   globalThis.fetch = async () =>
     new Response(null, {

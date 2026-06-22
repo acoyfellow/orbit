@@ -14,7 +14,7 @@ const brief: Brief = {
   gaps: [],
   proposals: [],
 };
-const app = createHttpApp(async () => brief);
+const app = createHttpApp({ runner: async () => brief, maxRequestBytes: 1024 });
 const rpc = (method: string, params?: unknown) =>
   app.request("/mcp", {
     method: "POST",
@@ -67,6 +67,52 @@ test("MCP gets the spec, runs, and renders markdown", async () => {
     await rpc("tools/call", { name: "render_markdown", arguments: { brief } })
   ).json();
   assert.match(rendered.result.content[0].text, /^# Test/m);
+});
+
+test("generic app disables runs unless a policy-bound runner is injected", async () => {
+  const response = await createHttpApp().request("/api/runs", {
+    method: "POST",
+    body: "{}",
+  });
+  assert.equal(response.status, 403);
+});
+
+test("caps streamed request bodies without relying on content-length", async () => {
+  const body = new ReadableStream({
+    start(controller) {
+      controller.enqueue(
+        new TextEncoder().encode(`{"value":"${"x".repeat(2000)}"}`),
+      );
+      controller.close();
+    },
+  });
+  const request = new Request("http://localhost/api/runs", {
+    method: "POST",
+    body,
+    duplex: "half",
+  } as RequestInit);
+  const response = await app.fetch(request);
+  assert.equal(response.status, 413);
+  assert.match((await response.json()).error, /too large/);
+});
+
+test("adds baseline browser security headers", async () => {
+  const response = await app.request("/api/example");
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(response.headers.get("x-frame-options"), "DENY");
+  assert.match(
+    response.headers.get("content-security-policy") ?? "",
+    /frame-ancestors 'none'/,
+  );
+});
+
+test("render_markdown rejects incomplete briefs", async () => {
+  const response = await rpc("tools/call", {
+    name: "render_markdown",
+    arguments: { brief: { version: 1, specName: "unsafe" } },
+  });
+  const body = await response.json();
+  assert.equal(body.result.isError, true);
 });
 
 test("MCP rejects unknown methods and tools", async () => {
