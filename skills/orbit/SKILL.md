@@ -13,4 +13,4 @@ Use when asked to monitor public JSON/RSS sources or produce an evidence-preserv
 4. Present proposals as **approval required**. Never perform them.
 5. If collection fails, report the adapter/source and error; do not fabricate evidence or describe the checked-in UI fixture as a live run.
 
-The same serialized spec is accepted by `POST /api/runs`. `examples/public-web.json` is the public demonstration.
+The same serialized spec is accepted by `POST /api/runs`. `examples/public-web.json` is the public demonstration. On a hosted Orbit instance, `/mcp` exposes `get_example_spec`, `run_public_spec`, and `render_markdown`; use only those discovery/read-only tools and treat every returned proposal as unexecuted.

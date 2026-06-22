@@ -4,7 +4,9 @@ Orbit is a deliberately narrow pipeline: **spec → adapters → evidence → le
 
 `contracts.ts` is the portable boundary: JSON-safe values, explicit versioning, evidence IDs and approval flags. The kernel validates limits, dispatches collection, orders evidence, computes SHA-256 digests over canonical JSON, and applies lenses. Adapters know transport/format but not meaning. Lenses receive minimized evidence and never fetch. CLI, Hono API and Svelte UI only present the same `Brief`.
 
-A run ID derives from the spec and evidence digests, so identical content is addressable even though retrieval timestamps differ. This iteration does not add a cache: a future D1/R2 implementation can use those IDs without changing contracts. The checked-in UI fixture is explicitly illustrative; the CLI generates honest current output.
+A run ID derives from the spec and evidence digests, so identical content is addressable even though retrieval timestamps differ. This iteration does not add a cache: a future D1/R2 implementation can use those IDs without changing contracts. The checked-in UI fixture is explicitly illustrative and only supplies initial rendering; the hydrated page runs the shared public spec through the real API and replaces it with current output.
+
+`http-app.ts` owns portable Hono routes and accepts an injected runner, so route tests do not import Worker/Svelte bundles. `worker.ts` only attaches the svelte-hono renderer. The `/mcp` JSON-RPC endpoint is another thin interface over the same example, runner, and Markdown renderer; it deliberately exposes three read-only/discovery tools and no state.
 
 ## Hosted boundaries
 

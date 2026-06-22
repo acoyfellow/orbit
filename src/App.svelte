@@ -1,9 +1,38 @@
 <script lang="ts">
-  import type { Brief } from "./contracts.js";
-  let { brief }: { brief: Brief } = $props();
+  import type { Brief, RunSpec } from "./contracts.js";
+  let { initialBrief }: { initialBrief: Brief } = $props();
+  let brief = $state(initialBrief);
   let selected = $state<string | null>(brief.evidence[0]?.id ?? null);
+  let running = $state(false);
+  let error = $state<string | null>(null);
+  let isFixture = $state(true);
   const evidence = (ids: string[]) =>
     ids.map((id) => brief.evidence.find((e) => e.id === id)).filter(Boolean);
+  async function runExample() {
+    running = true;
+    error = null;
+    try {
+      const specResponse = await fetch("/api/example");
+      if (!specResponse.ok)
+        throw new Error("Could not load the public example.");
+      const spec = (await specResponse.json()) as RunSpec;
+      const response = await fetch("/api/runs", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(spec),
+      });
+      const body = (await response.json()) as Brief | { error?: string };
+      if (!response.ok)
+        throw new Error("error" in body ? body.error : "Run failed.");
+      brief = body as Brief;
+      selected = brief.evidence[0]?.id ?? null;
+      isFixture = false;
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : "Run failed.";
+    } finally {
+      running = false;
+    }
+  }
 </script>
 
 <svelte:head
@@ -14,11 +43,22 @@
     <span class="brand">ORBIT / REVIEW</span>
     <h1>{brief.specName}</h1>
   </div>
-  <div class="meta">
-    <b>{brief.evidence.length}</b> evidence<br /><code>{brief.runId}</code>
+  <div class="controls">
+    <span class:live={!isFixture}
+      >{isFixture
+        ? "Checked-in fixture · not live"
+        : "Current public run"}</span
+    >
+    <button class="run" onclick={runExample} disabled={running}>
+      {running ? "Collecting public evidence…" : "Run public example"}
+    </button>
   </div>
 </header>
-<main>
+{#if error}<div class="error" role="alert">
+    <b>Run failed.</b>
+    {error} The fixture remains visible.
+  </div>{/if}
+<main aria-busy={running}>
   <section>
     <div class="eyebrow">Claims</div>
     {#each brief.claims as claim}<article>
@@ -32,7 +72,7 @@
       </article>{/each}
   </section>
   <aside>
-    <div class="eyebrow">Evidence ledger</div>
+    <div class="eyebrow">Evidence ledger · {brief.evidence.length}</div>
     {#each brief.evidence as e}<a
         class:selected={selected === e.id}
         href={e.itemUrl ?? e.sourceUrl}
@@ -57,7 +97,8 @@
   </section>
 </main>
 <footer>
-  Completed {new Date(brief.completedAt).toLocaleString()} · No actions executed
+  Completed {new Date(brief.completedAt).toLocaleString()} ·
+  <code>{brief.runId}</code> · No actions executed
 </footer>
 
 <style>
@@ -74,7 +115,8 @@
   }
   header,
   main,
-  footer {
+  footer,
+  .error {
     max-width: 1120px;
     margin: auto;
   }
@@ -82,6 +124,7 @@
     display: flex;
     justify-content: space-between;
     align-items: end;
+    gap: 24px;
     padding: 54px 24px 28px;
     border-bottom: 1px solid #a8aea7;
   }
@@ -94,18 +137,43 @@
     color: #477a61;
   }
   h1 {
-    font-family: Georgia, serif;
-    font-size: clamp(34px, 6vw, 64px);
+    font:
+      clamp(34px, 6vw, 64px) / 1 Georgia,
+      serif;
     margin: 8px 0 0;
-    line-height: 1;
   }
-  .meta {
-    text-align: right;
-    color: #64706a;
+  .controls {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    gap: 10px;
   }
-  .meta b {
-    font-size: 30px;
-    color: #17201d;
+  .controls span {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #8b542e;
+  }
+  .controls span.live {
+    color: #347151;
+  }
+  .run {
+    border: 0;
+    background: #173f30;
+    color: white;
+    border-radius: 3px;
+    padding: 11px 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .run:disabled {
+    opacity: 0.58;
+    cursor: wait;
+  }
+  .error {
+    padding: 14px 24px;
+    background: #f5d6cf;
+    color: #762d21;
   }
   main {
     padding: 28px 24px;
@@ -123,7 +191,7 @@
       serif;
     margin: 0 0 12px;
   }
-  button {
+  article button {
     border: 1px solid #aab2ab;
     background: transparent;
     border-radius: 999px;
@@ -131,7 +199,7 @@
     color: #477a61;
     cursor: pointer;
   }
-  button.active {
+  article button.active {
     background: #173f30;
     color: white;
   }
@@ -147,6 +215,7 @@
     text-decoration: none;
     color: inherit;
     border: 1px solid transparent;
+    overflow-wrap: anywhere;
   }
   aside a.selected {
     background: #fff;
@@ -179,20 +248,32 @@
   }
   @media (max-width: 720px) {
     header {
-      align-items: start;
+      align-items: stretch;
+      flex-direction: column;
+      padding-top: 34px;
     }
-    .meta {
-      display: none;
+    .controls {
+      align-items: stretch;
+    }
+    .controls span {
+      text-align: left;
+    }
+    .run {
+      width: 100%;
     }
     main {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 28px;
     }
     aside {
       border: 0;
       padding: 0;
     }
     .lower {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
+    }
+    h2 {
+      font-size: 21px;
     }
   }
 </style>

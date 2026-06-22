@@ -22,7 +22,7 @@ That example reads public JSON, preserves source URL, retrieval time and content
 - deterministic summary/filter and evidence-to-action lenses;
 - content-addressed evidence with explicit provenance;
 - JSON and Markdown briefs;
-- a small CLI, HTTP API, Svelte review surface, agent skill and `loops.yaml` example;
+- a small CLI, HTTP API, Svelte review surface, read-only MCP endpoint, agent skill and `loops.yaml` example;
 - Cloudflare-ready D1/R2/Workers AI/Workflow boundaries without requiring them for the local example;
 - approval-required action proposals—never ambient mutation.
 
@@ -49,7 +49,9 @@ orbit brief run.json --format markdown
 orbit record-outcome outcome.json
 ```
 
-Agents use the checked-in skill. Scheduled shells use the checked-in `loops.yaml` example. Hosted clients use the same run and brief contracts over HTTP.
+Agents use the checked-in skill. Scheduled shells use the checked-in `loops.yaml` example. Hosted clients use the same run and brief contracts over HTTP. The review page starts with a clearly labelled illustrative fixture; **Run public example** fetches the checked-in spec from `GET /api/example`, submits it to `POST /api/runs`, and replaces the fixture with current public evidence.
+
+A narrow Streamable HTTP-style MCP endpoint is available at `POST /mcp`. It supports `initialize`, `tools/list`, and `tools/call` for `get_example_spec`, `run_public_spec`, and `render_markdown`. These tools only discover, collect bounded public sources, or format a supplied brief—there are no credentials, persistence, approvals, or action tools.
 
 ## Security
 

@@ -20,4 +20,4 @@ For a private/team deployment:
 7. add D1/R2 only when durable cache/outcome retention is enabled, with an explicit deletion policy;
 8. verify anonymous access, authenticated access, one real source run, citations and a rejected unsafe URL.
 
-Current `0.0.1` hosting is a public-source demonstration. It has no private adapters, credentials, persistence, approval execution or mutable actions.
+Current `0.0.1` hosting is a public-source demonstration. It has no private adapters, credentials, persistence, approval execution or mutable actions. The same origin exposes `/mcp`; clients should POST JSON-RPC and negotiate with `initialize`. Before exposing it beyond dogfood, apply the same Access, request-size, rate, timeout, and egress controls as `/api/runs`.
