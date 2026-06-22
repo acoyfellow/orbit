@@ -12,18 +12,26 @@ export type RunSummary = {
 };
 
 export function summarizeRun(brief: Brief, spec?: RunSpec): RunSummary {
+  // SSR serialization can represent an uninitialized optional prop as a
+  // non-RunSpec sentinel. Treat only complete specs as provenance metadata.
+  const usableSpec =
+    spec && Array.isArray(spec.sources) && Array.isArray(spec.lenses)
+      ? spec
+      : undefined;
   const started = Date.parse(brief.startedAt);
   const completed = Date.parse(brief.completedAt);
   return {
-    adapters: [...new Set(spec?.sources.map((source) => source.type) ?? [])],
+    adapters: [
+      ...new Set(usableSpec?.sources.map((source) => source.type) ?? []),
+    ],
     sourceCount:
-      spec?.sources.length ??
+      usableSpec?.sources.length ??
       new Set(brief.evidence.map((item) => item.sourceId)).size,
     durationMs:
       Number.isFinite(started) && Number.isFinite(completed)
         ? Math.max(0, completed - started)
         : 0,
-    lenses: spec?.lenses.map((lens) => lens.type) ?? [],
+    lenses: usableSpec?.lenses.map((lens) => lens.type) ?? [],
     evidenceCount: brief.evidence.length,
     claimCount: brief.claims.length,
     gapCount: brief.gaps.length,

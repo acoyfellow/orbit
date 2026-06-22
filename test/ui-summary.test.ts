@@ -41,6 +41,13 @@ test("summarizeRun reports pipeline, timing, and output counts", () => {
   });
 });
 
+test("summarizeRun tolerates an SSR optional-prop sentinel", () => {
+  const summary = summarizeRun(brief, {} as RunSpec);
+  assert.deepEqual(summary.adapters, []);
+  assert.deepEqual(summary.lenses, []);
+  assert.equal(summary.sourceCount, 0);
+});
+
 test("summarizeRun derives fixture source count and clamps negative timing", () => {
   const fixture = {
     ...brief,
