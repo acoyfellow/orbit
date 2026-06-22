@@ -142,7 +142,7 @@
       </p>{/if}
     {#each brief.claims as claim}<article>
         <h2>{claim.text}</h2>
-        <EvidenceControls ids={claim.evidenceIds} />
+        {@render EvidenceControls(claim.evidenceIds)}
       </article>{/each}
   </section>
   <aside>
@@ -201,7 +201,7 @@
           No gaps were identified.
         </p>{/if}{#each brief.gaps as gap}<article>
           <p>{gap.text}</p>
-          <EvidenceControls ids={gap.evidenceIds} />
+          {@render EvidenceControls(gap.evidenceIds)}
         </article>{/each}
     </div>
     <div>
@@ -211,7 +211,7 @@
         </p>{/if}{#each brief.proposals as proposal}<article class="proposal">
           <span>Approval required</span>
           <h3>{proposal.text}</h3>
-          <EvidenceControls ids={proposal.evidenceIds} />
+          {@render EvidenceControls(proposal.evidenceIds)}
         </article>{/each}
     </div>
   </section>
