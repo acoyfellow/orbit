@@ -425,12 +425,13 @@
 </footer>
 
 {#snippet EvidenceControls(ids: string[])}
-  <div class="evidence-controls" aria-label="Supporting evidence">
-    {#if ids.length === 0}<small>No supporting evidence linked.</small>{/if}
+  <div class="evidence-controls" aria-label="Where this came from">
+    {#if referencedEvidence(ids).length > 0}<small>Based on:</small>{/if}
     {#each referencedEvidence(ids) as item}<button
         class:active={selected === item.id}
         aria-pressed={selected === item.id}
-        onclick={() => choose(item.id)}>{item.id}</button
+        title={item.title}
+        onclick={() => choose(item.id)}>{item.title}</button
       >{/each}
   </div>
 {/snippet}
@@ -656,15 +657,25 @@
   }
   .evidence-controls {
     display: flex;
+    align-items: center;
     gap: 6px;
     flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .evidence-controls small {
+    color: #67716c;
   }
   .evidence-controls button {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     border: 1px solid #aab2ab;
     background: transparent;
     border-radius: 999px;
-    padding: 5px 9px;
+    padding: 5px 11px;
     color: #477a61;
+    font: inherit;
     cursor: pointer;
   }
   .evidence-controls button.active {
