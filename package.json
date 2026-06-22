@@ -20,12 +20,12 @@
   ],
   "scripts": {
     "orbit": "tsx src/cli.ts",
-    "test": "vitest run",
+    "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "build": "node build.mjs",
     "pack:dry": "npm pack --dry-run",
     "format:check": "prettier --plugin=prettier-plugin-svelte --check 'src/**/*.{ts,svelte}' 'test/**/*.ts' 'build.mjs' 'package.json' 'tsconfig.json' 'examples/*.{json,yaml}' '.github/**/*.yml' 'skills/**/*.md' 'docs/**/*.md' 'README.md' 'LOOP.md'",
-    "check": "npm run format:check && npm run typecheck && npm test && npm run build && npm run pack:dry",
+    "check": "npm run format:check && npm test && npm run build && npm run typecheck && npm run pack:dry",
     "dev": "npm run build && wrangler dev --config wrangler.jsonc",
     "deploy": "npm run check && wrangler deploy --config wrangler.jsonc"
   },
@@ -36,13 +36,12 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "esbuild": "^0.25.0",
+    "esbuild": "0.28.1",
     "esbuild-svelte": "^0.9.3",
     "prettier": "3.6.2",
     "prettier-plugin-svelte": "3.4.0",
     "tsx": "^4.20.0",
     "typescript": "^5.8.0",
-    "vitest": "^3.0.0",
     "wrangler": "4.103.0"
   },
   "engines": {

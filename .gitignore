@@ -1,5 +1,8 @@
 node_modules/
 dist/
 orbit-output/
+.wrangler/
+.context/
+src/bundles.generated.ts
 *.tgz
 .DS_Store
