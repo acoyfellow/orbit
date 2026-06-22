@@ -93,7 +93,9 @@ export function createHttpApp(options: HttpAppOptions = {}) {
     c.header("Referrer-Policy", "no-referrer");
     c.header(
       "Content-Security-Policy",
-      "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'",
+      // svelte-hono emits an inline import map and hydration bootstrap. The
+      // page renders only escaped structured data and loads code from self.
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'",
     );
     c.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   });

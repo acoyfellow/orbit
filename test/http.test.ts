@@ -100,10 +100,9 @@ test("adds baseline browser security headers", async () => {
   const response = await app.request("/api/example");
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("x-frame-options"), "DENY");
-  assert.match(
-    response.headers.get("content-security-policy") ?? "",
-    /frame-ancestors 'none'/,
-  );
+  const csp = response.headers.get("content-security-policy") ?? "";
+  assert.match(csp, /script-src 'self' 'unsafe-inline'/);
+  assert.match(csp, /frame-ancestors 'none'/);
 });
 
 test("render_markdown rejects incomplete briefs", async () => {
