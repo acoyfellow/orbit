@@ -14,7 +14,7 @@ export function applyLenses(
     .slice(0, filter.maxClaims);
   const claims = selected.map((e, i) => ({
     id: `claim_${i + 1}`,
-    text: e.summary ? `${e.title} — ${e.summary}` : e.title,
+    text: e.title,
     evidenceIds: [e.id],
   }));
   const gaps = [] as Brief["gaps"];
@@ -32,7 +32,7 @@ export function applyLenses(
     });
   const proposals = claims.slice(0, action.maxProposals).map((c, i) => ({
     id: `proposal_${i + 1}`,
-    text: `Review and decide whether to follow up: ${c.text.slice(0, 180)}`,
+    text: `Worth a look: ${c.text.slice(0, 180)}`,
     evidenceIds: c.evidenceIds,
     approvalRequired: true as const,
   }));
