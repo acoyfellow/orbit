@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+.dev.vars
+.wrangler/
+*.tgz
+.DS_Store
+bundles.generated.ts
+.context/
