@@ -426,12 +426,12 @@
 
 {#snippet EvidenceControls(ids: string[])}
   <div class="evidence-controls" aria-label="Where this came from">
-    {#if referencedEvidence(ids).length > 0}<small>Based on:</small>{/if}
+    {#if referencedEvidence(ids).length > 0}<small>From:</small>{/if}
     {#each referencedEvidence(ids) as item}<button
         class:active={selected === item.id}
         aria-pressed={selected === item.id}
-        title={item.title}
-        onclick={() => choose(item.id)}>{item.title}</button
+        title={`Open: ${item.title}`}
+        onclick={() => choose(item.id)}>{item.sourceId}</button
       >{/each}
   </div>
 {/snippet}
