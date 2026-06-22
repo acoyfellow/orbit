@@ -1,0 +1,7 @@
+version: 1
+loops:
+  orbit-public-web:
+    every: 6h
+    command: npm run orbit -- run examples/public-web.json orbit-output
+    timeout: 30s
+    on_success: review orbit-output/brief.md

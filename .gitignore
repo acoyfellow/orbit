@@ -1,9 +1,5 @@
 node_modules/
 dist/
-build/
-.dev.vars
-.wrangler/
+orbit-output/
 *.tgz
 .DS_Store
-bundles.generated.ts
-.context/

@@ -1,0 +1,5 @@
+# Security and privacy
+
+The shipped spec accepts only public HTTPS sources. Responses are timeout-, byte-, item-, and source-bounded. Evidence excludes headers and stores only a short plain-text title/summary, provenance URLs, retrieval time and digest. No secrets, account identifiers, private source names, arbitrary code, action execution, or Cloudflare resources are configured here. Source URLs must use public HTTPS literals, credentials are rejected, and redirects are not followed.
+
+Proposals always carry `approvalRequired: true`; Orbit never acts on them. The local CLI writes only to its requested directory. Before accepting untrusted hosted specs, require Cloudflare Access, enforce request size at the edge, add DNS-resolution/egress protection against rebinding, isolate credentials per adapter, add retention/deletion policy, and audit approval transitions. Treat feed text as untrusted data; deterministic lenses do not execute or follow its instructions. Review legal/robots and source terms.

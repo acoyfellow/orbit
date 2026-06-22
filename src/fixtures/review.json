@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "runId": "run_checked_in_example",
+  "specName": "Review surface example",
+  "startedAt": "2026-06-22T00:00:00.000Z",
+  "completedAt": "2026-06-22T00:00:01.000Z",
+  "evidence": [
+    {
+      "id": "ev_example",
+      "sourceId": "fixture",
+      "sourceUrl": "https://example.com/",
+      "retrievedAt": "2026-06-22T00:00:00.000Z",
+      "visibility": "public",
+      "title": "Illustrative evidence",
+      "summary": "This checked-in record demonstrates the review layout; it is not presented as a live run.",
+      "digest": "fixture-not-content-addressed"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim_1",
+      "text": "This is explicitly an illustrative checked-in fixture.",
+      "evidenceIds": ["ev_example"]
+    }
+  ],
+  "gaps": [
+    {
+      "id": "gap_1",
+      "text": "Run the public example to review current evidence.",
+      "evidenceIds": []
+    }
+  ],
+  "proposals": [
+    {
+      "id": "proposal_1",
+      "text": "Approve running the public example locally.",
+      "evidenceIds": ["ev_example"],
+      "approvalRequired": true
+    }
+  ]
+}
