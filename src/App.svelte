@@ -10,6 +10,7 @@
   );
   let running = $state(false);
   let error = $state<string | null>(null);
+  let copiedProposal = $state<string | null>(null);
   let isFixture = $state(true);
   const referencedEvidence = (ids: string[] | undefined) =>
     (Array.isArray(ids) ? ids : [])
@@ -62,6 +63,17 @@
   function choose(id: string) {
     selected = id;
   }
+  async function copySuggestion(id: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      copiedProposal = id;
+      window.setTimeout(() => {
+        if (copiedProposal === id) copiedProposal = null;
+      }, 1800);
+    } catch {
+      error = "Could not copy the suggestion.";
+    }
+  }
   async function runExample() {
     running = true;
     error = null;
@@ -110,6 +122,21 @@
     >
   </div>
 </header>
+<section class="orientation" aria-labelledby="orientation-heading">
+  <div>
+    <div class="eyebrow" id="orientation-heading">What to do here</div>
+    <p>
+      Run the example to collect recent public changes. Review what changed,
+      open the supporting sources, inspect coverage gaps, and copy any follow-up
+      worth taking elsewhere. Orbit does not execute suggestions.
+    </p>
+  </div>
+  <ol>
+    <li><b>1</b> Collect</li>
+    <li><b>2</b> Inspect sources</li>
+    <li><b>3</b> Choose a follow-up</li>
+  </ol>
+</section>
 <div class="sr-only" role="status" aria-live="polite">
   {running
     ? "Public evidence collection in progress."
@@ -165,7 +192,7 @@
   {#if coverage().lanes.length > 0}
     <section class="coverage" aria-labelledby="coverage-heading">
       <div class="eyebrow" id="coverage-heading">
-        Evidence coverage · grouped by operator-declared lane × adapter
+        Coverage · grouped by declared topic × source type
       </div>
       <p>
         Counts show coverage only—not quality or support. Cells are lossy;
@@ -199,9 +226,9 @@
     </section>
   {/if}
   <section>
-    <div class="eyebrow">Claims</div>
+    <div class="eyebrow">What changed</div>
     {#if brief.claims.length === 0}<p class="empty">
-        No claims were produced.
+        No changes matched this brief.
       </p>{/if}
     {#each brief.claims as claim}<article>
         <h2>{claim.text}</h2>
@@ -210,7 +237,7 @@
   </section>
   <aside>
     <div class="eyebrow">
-      Evidence ledger · {visibleEvidence().length}{coverageFilter
+      Sources · {visibleEvidence().length}{coverageFilter
         ? ` / ${brief.evidence.length}`
         : ""}
     </div>
@@ -273,7 +300,7 @@
   </aside>
   <section class="lower">
     <div>
-      <div class="eyebrow">Visible gaps</div>
+      <div class="eyebrow">Missing coverage</div>
       {#if brief.gaps.length === 0}<p class="empty">
           No gaps were identified.
         </p>{/if}{#each brief.gaps as gap}<article>
@@ -282,13 +309,22 @@
         </article>{/each}
     </div>
     <div>
-      <div class="eyebrow">Proposed actions</div>
+      <div class="eyebrow">Suggested follow-ups</div>
+      <p class="section-help">
+        Suggestions are review notes only. Orbit never executes them.
+      </p>
       {#if brief.proposals.length === 0}<p class="empty">
-          No actions were proposed.
+          No follow-ups were suggested.
         </p>{/if}{#each brief.proposals as proposal}<article class="proposal">
-          <span>Approval required</span>
+          <span>Not executed</span>
           <h3>{proposal.text}</h3>
           {@render EvidenceControls(proposal.evidenceIds)}
+          <button
+            class="copy-suggestion"
+            onclick={() => copySuggestion(proposal.id, proposal.text)}
+          >
+            {copiedProposal === proposal.id ? "Copied" : "Copy suggestion"}
+          </button>
         </article>{/each}
     </div>
   </section>
@@ -324,7 +360,8 @@
   header,
   main,
   footer,
-  .error {
+  .error,
+  .orientation {
     max-width: 1120px;
     margin: auto;
   }
@@ -377,6 +414,47 @@
   .run:disabled {
     opacity: 0.58;
     cursor: wait;
+  }
+  .orientation {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+    gap: 32px;
+    padding: 22px 24px;
+    border-bottom: 1px solid #c8cbc5;
+    background: #f8f7f2;
+  }
+  .orientation p {
+    max-width: 680px;
+    margin: 7px 0 0;
+    color: #4f5c56;
+    font-size: 15px;
+  }
+  .orientation ol {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: #58645f;
+    font-size: 12px;
+  }
+  .orientation li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .orientation li b {
+    display: grid;
+    width: 22px;
+    height: 22px;
+    place-items: center;
+    border: 1px solid #aab2ab;
+    border-radius: 999px;
+    color: #173f30;
+    font-size: 10px;
   }
   .error {
     padding: 14px 24px;
@@ -534,12 +612,33 @@
     border-top: 1px solid #a8aea7;
     padding-top: 26px;
   }
+  .section-help {
+    margin: 8px 0 2px;
+    color: #67716c;
+    font-size: 12px;
+  }
   .proposal span {
     font-size: 10px;
     text-transform: uppercase;
-    background: #e6b94f;
+    background: #e2e4df;
+    color: #53605a;
     padding: 4px 7px;
     border-radius: 2px;
+  }
+  .copy-suggestion {
+    margin-top: 12px;
+    padding: 7px 10px;
+    border: 1px solid #aab2ab;
+    border-radius: 3px;
+    background: transparent;
+    color: #173f30;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .copy-suggestion:hover {
+    background: #fff;
   }
   .empty {
     color: #67716c;
@@ -573,6 +672,14 @@
     }
     .controls {
       align-items: stretch;
+    }
+    .orientation {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .orientation ol {
+      justify-content: flex-start;
+      flex-wrap: wrap;
     }
     .controls span {
       text-align: left;

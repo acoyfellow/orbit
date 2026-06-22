@@ -29,7 +29,7 @@ proposals   2, approval required
 ## Interfaces
 
 - `loops-yaml` executed `examples/loops.yaml` successfully and wrote JSON/Markdown.
-- `orbit.coey.dev` transitioned from an explicitly illustrative fixture to a current public run and exposed provenance, coverage, evidence details and proposed actions.
+- `orbit.coey.dev` transitioned from an explicitly illustrative fixture to a current public run and exposed provenance, coverage, evidence details and clearly non-executed suggested follow-ups.
 - Anonymous 300 KB MCP input returned `413`; root responses include CSP, frame, MIME, referrer and permissions headers.
 - My AX invoked the deployed Orbit spec through its bounded work capability and produced an owner Attention receipt with the same run ID and counts.
 - A reviewed outcome was validated and appended to a local JSONL ledger.
