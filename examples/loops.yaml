@@ -1,7 +1,9 @@
+# loops.yaml shell scheduler example (https://github.com/acoyfellow/loops-yaml)
+# Run once: loops run orbit-public-web
+# Schedule continuously: loops watch
 version: 1
 loops:
   orbit-public-web:
-    every: 6h
-    command: npm run orbit -- run examples/public-web.json orbit-output
-    timeout: 30s
-    on_success: review orbit-output/brief.md
+    schedule: "0 */6 * * *"
+    run: "npm run orbit -- run examples/public-web.json orbit-output"
+    cwd: "/absolute/path/to/orbit"
