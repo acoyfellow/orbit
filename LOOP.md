@@ -13,7 +13,7 @@ Orbit is complete when:
 - deterministic and AI-assisted lenses produce claims, gaps, and approval-required proposals with evidence IDs;
 - unchanged inputs reuse content-addressed artifacts;
 - JSON, Markdown, and a polished svelte-hono review page show the same brief;
-- tests, typecheck, build, package dry-run, CI, security and deployment docs pass;
+- tests, typecheck, build, extracted-package CLI smoke, CI, security and deployment docs pass;
 - a secure Cloudflare deployment is proven without exposing AX-private configuration;
 - Orbit is dogfooded from both `loops.yaml` and My AX, and outcomes can flow back;
 - the final diff contains no placeholder demos presented as real evidence, dead code, stale narration, secrets, account IDs, or private source names.
@@ -27,6 +27,8 @@ RESEARCH → QUALIFY → BUILD → CLEANUP → VERIFY → REVIEW → COMMIT → 
 Exactly one writer edits the checkout at a time. Parallel Terrarium runs are read-only research/review. The parent owns commits, GitHub, deployment and proof.
 
 Every iteration freezes one finding with evidence, smallest intervention, acceptance criteria, repository cost, and dogfood/proof plan. Prefer completing a thin vertical slice over widening the platform.
+
+For changes that touch packaging, SSR, hydration, CSP, generated bundles, or client interaction, build success is not semantic proof. The parent must exercise the packed artifact or real browser surface. This gate prevents publishable-but-broken CLIs and SSR HTML whose hydrated controls do not run.
 
 ## Seven-minute rule
 
