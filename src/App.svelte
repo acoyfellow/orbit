@@ -109,7 +109,13 @@
       <div>
         <dt>Adapters</dt>
         <dd>
-          {summary().adapters.join(", ") || "Fixture metadata unavailable"}
+          {summary()
+            .adapters.map((adapter) =>
+              adapter === "github-releases"
+                ? "GitHub releases"
+                : adapter.toUpperCase(),
+            )
+            .join(", ") || "Fixture metadata unavailable"}
         </dd>
       </div>
       <div>

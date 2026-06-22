@@ -13,7 +13,14 @@ export interface RssSource {
   url: string;
   maxItems: number;
 }
-export type Source = JsonSource | RssSource;
+export interface GitHubReleasesSource {
+  id: string;
+  type: "github-releases";
+  owner: string;
+  repo: string;
+  maxItems: number;
+}
+export type Source = JsonSource | RssSource | GitHubReleasesSource;
 export interface FilterLens {
   type: "filter-summary";
   include?: string[];

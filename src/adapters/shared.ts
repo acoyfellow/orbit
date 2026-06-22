@@ -4,6 +4,7 @@ export async function boundedFetch(
   rawUrl: string,
   maxBytes: number,
   timeoutMs: number,
+  headers: Record<string, string> = {},
 ): Promise<{ text: string; retrievedAt: string }> {
   const url = requirePublicHttpsUrl(rawUrl).toString();
   const response = await fetch(url, {
@@ -12,6 +13,7 @@ export async function boundedFetch(
     headers: {
       accept:
         "application/json, application/rss+xml, application/xml, text/xml",
+      ...headers,
     },
   });
   if (response.status >= 300 && response.status < 400) {

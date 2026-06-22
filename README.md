@@ -13,12 +13,12 @@ npm install
 npm run orbit -- run examples/public-web.json
 ```
 
-That example reads public JSON, preserves source URL, retrieval time and content digest, then writes the same portable brief shape used by the API and skill.
+That example monitors releases from real agent/tooling repositories and a public engineering RSS feed, preserves source URL, retrieval time and content digest, then writes the same portable brief shape used by the API and skill. Generic JSON remains available for other public APIs.
 
 ## What ships in 0.0.1
 
 - one serializable run specification;
-- public JSON and RSS adapters;
+- first-class GitHub releases plus generic public JSON and RSS adapters;
 - deterministic summary/filter and evidence-to-action lenses;
 - content-addressed evidence with explicit provenance;
 - JSON and Markdown briefs;
@@ -62,7 +62,7 @@ A narrow Streamable HTTP-style MCP endpoint is available at `POST /mcp`. It supp
 
 ## Security
 
-The shipped public adapters have no credential input. Orbit caps request bodies while streaming (including bodies without `Content-Length`), caps source response streams before decoding, strictly validates specs and Markdown briefs, never writes response headers to evidence, and proposes actions rather than executing them. Baseline browser security headers are applied by the Hono app. Authentication, DNS-resolution/egress controls, retention, and credential isolation remain deployment responsibilities; public examples use public sources and deterministic lenses.
+The shipped public adapters have no credential input. The GitHub releases adapter derives the versioned `api.github.com/repos/{owner}/{repo}/releases` endpoint from validated owner/repository names, identifies Orbit with a `User-Agent`, and stays within GitHub's unauthenticated public rate limit. Orbit caps request bodies while streaming (including bodies without `Content-Length`), caps source response streams before decoding, strictly validates specs and Markdown briefs, never writes response headers to evidence, and proposes actions rather than executing them. Baseline browser security headers are applied by the Hono app. Authentication, DNS-resolution/egress controls, retention, and credential isolation remain deployment responsibilities; public examples use public sources and deterministic lenses.
 
 See [Security](docs/security.md) and [Architecture](docs/architecture.md).
 

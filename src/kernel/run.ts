@@ -1,6 +1,7 @@
 import type { Brief, RunSpec } from "../contracts.js";
 import { collectJson } from "../adapters/json.js";
 import { collectRss } from "../adapters/rss.js";
+import { collectGitHubReleases } from "../adapters/github-releases.js";
 import { digest } from "./canonical.js";
 import { validateSpec } from "./validate.js";
 import { applyLenses } from "../lenses/deterministic.js";
@@ -13,7 +14,9 @@ export async function run(value: unknown): Promise<Brief> {
       spec.sources.map((s) =>
         s.type === "json"
           ? collectJson(s, spec.limits)
-          : collectRss(s, spec.limits),
+          : s.type === "rss"
+            ? collectRss(s, spec.limits)
+            : collectGitHubReleases(s, spec.limits),
       ),
     )
   )

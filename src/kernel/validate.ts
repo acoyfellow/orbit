@@ -56,12 +56,25 @@ export function validateSpec(value: unknown): asserts value is RunSpec {
     if (source.type === "json")
       exact(source, [...common, "titlePath", "summaryPath"], "source");
     else if (source.type === "rss") exact(source, common, "source");
+    else if (source.type === "github-releases")
+      exact(source, ["id", "type", "owner", "repo", "maxItems"], "source");
     else throw new Error("invalid source type");
     text(source.id, "source id", 100);
     if (ids.has(source.id as string)) throw new Error("duplicate source id");
     ids.add(source.id as string);
-    text(source.url, "source url", 2000);
-    requirePublicHttpsUrl(source.url as string);
+    if (source.type === "github-releases") {
+      text(source.owner, "repository owner", 100);
+      text(source.repo, "repository name", 100);
+      const repositoryPart = /^[A-Za-z0-9_.-]+$/;
+      if (
+        !repositoryPart.test(source.owner as string) ||
+        !repositoryPart.test(source.repo as string)
+      )
+        throw new Error("invalid GitHub repository");
+    } else {
+      text(source.url, "source url", 2000);
+      requirePublicHttpsUrl(source.url as string);
+    }
     integer(source.maxItems, 1, 100, "maxItems");
     for (const key of ["titlePath", "summaryPath"])
       if (source[key] !== undefined) text(source[key], key, 200);

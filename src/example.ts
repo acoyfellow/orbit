@@ -3,26 +3,32 @@ import type { RunSpec } from "./contracts.js";
 /** The checked-in public dogfood spec, shared by the page, API, and MCP. */
 export const publicExample: RunSpec = {
   version: 1,
-  name: "Public web change brief",
+  name: "Agent and tooling release watch",
   sources: [
     {
-      id: "json-placeholder",
-      type: "json",
-      url: "https://jsonplaceholder.typicode.com/posts",
+      id: "openai-agents-js",
+      type: "github-releases",
+      owner: "openai",
+      repo: "openai-agents-js",
       maxItems: 3,
-      titlePath: "title",
-      summaryPath: "body",
     },
     {
-      id: "cloudflare-blog",
+      id: "model-context-protocol-typescript-sdk",
+      type: "github-releases",
+      owner: "modelcontextprotocol",
+      repo: "typescript-sdk",
+      maxItems: 3,
+    },
+    {
+      id: "cloudflare-developer-platform",
       type: "rss",
       url: "https://blog.cloudflare.com/rss/",
       maxItems: 3,
     },
   ],
   lenses: [
-    { type: "filter-summary", include: [], maxClaims: 6 },
+    { type: "filter-summary", include: [], maxClaims: 9 },
     { type: "evidence-actions", maxProposals: 2 },
   ],
-  limits: { maxSources: 2, maxBytesPerSource: 1_000_000, timeoutMs: 10_000 },
+  limits: { maxSources: 3, maxBytesPerSource: 1_000_000, timeoutMs: 10_000 },
 };
