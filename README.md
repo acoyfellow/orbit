@@ -1,16 +1,20 @@
 # Orbit
 
-**Know what changed—and what deserves a closer look.**
+**See what's new in the projects you follow.**
 
-Orbit collects bounded public sources, preserves evidence and source health, generates a review brief, and lets a person record a portable decision. The checked-in example watches releases from **OpenAI Agents JS** and the **Model Context Protocol TypeScript SDK**, plus the **Cloudflare engineering RSS feed**.
+Orbit checks a list of projects and shows what changed since last time — new releases and posts — each linked back to the original. The checked-in example follows releases from **OpenAI Agents JS** and the **Model Context Protocol TypeScript SDK**, plus the **Cloudflare blog**.
+
+Under the hood it runs one path:
 
 ```text
 adapter → evidence → lens → brief → outcome
 ```
 
-[Live demo](https://orbit.coey.dev) · [Specification](src/contracts.ts) · [Docs](docs/) · [Security](docs/security.md)
+An adapter fetches a source, each item becomes a piece of evidence with its source link, a lens turns evidence into a short list of what's new, and you can save a note about what you decided.
 
-Orbit never executes a follow-up. The hosted demo does not persist runs or outcomes.
+[Live demo](https://orbit.coey.dev) · [How it works](docs/) · [Privacy](docs/security.md)
+
+Orbit never acts on a suggestion for you. The hosted demo does not store runs or notes.
 
 ## Run from a clone
 

@@ -13,29 +13,29 @@
       "lanes": ["illustrative"],
       "retrievedAt": "2026-06-22T00:00:00.000Z",
       "visibility": "public",
-      "title": "Illustrative evidence",
-      "summary": "This checked-in record demonstrates the review layout; it is not presented as a live run.",
+      "title": "Example update",
+      "summary": "This is a sample so you can see the layout. Press Check for updates for the real thing.",
       "digest": "fixture-not-content-addressed"
     }
   ],
   "claims": [
     {
       "id": "claim_1",
-      "text": "This is explicitly an illustrative checked-in fixture.",
+      "text": "This is a sample. Press Check for updates to see real ones.",
       "evidenceIds": ["ev_example"]
     }
   ],
   "gaps": [
     {
       "id": "gap_1",
-      "text": "Run the public example to review current evidence.",
+      "text": "Press Check for updates to see what's new.",
       "evidenceIds": []
     }
   ],
   "proposals": [
     {
       "id": "proposal_1",
-      "text": "Run the public example locally if you want current evidence.",
+      "text": "Press Check for updates to see what's new right now.",
       "evidenceIds": ["ev_example"],
       "approvalRequired": true
     }
@@ -48,7 +48,7 @@
       "collectedItems": 1,
       "maxItems": 1,
       "truncated": false,
-      "detail": "Illustrative fixture; run the public example for current receipts."
+      "detail": "Sample only. Press Check for updates for the real result."
     }
   ]
 }

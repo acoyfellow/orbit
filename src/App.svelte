@@ -146,58 +146,38 @@
 <header>
   <div>
     <span class="brand">ORBIT</span>
-    <h1>Know what changed—and what deserves a closer look.</h1>
+    <h1>See what's new in the projects you follow.</h1>
     <p class="lede">
-      Collect recent releases from OpenAI Agents JS and the Model Context
-      Protocol TypeScript SDK, plus Cloudflare engineering posts. Every finding
-      stays linked to its public source.
+      Orbit checks a few projects for you and shows what changed — new releases
+      and posts — each linked back to the original. This demo follows OpenAI
+      Agents JS, the Model Context Protocol SDK, and the Cloudflare blog.
     </p>
     <nav aria-label="Project links">
       <a href="https://github.com/acoyfellow/orbit">GitHub</a><a
-        href="https://github.com/acoyfellow/orbit/blob/main/src/contracts.ts"
-        >Specification</a
-      ><a href="https://github.com/acoyfellow/orbit/tree/main/docs">Docs</a><a
-        href="https://github.com/acoyfellow/orbit/blob/main/docs/security.md"
-        >Security</a
+        href="https://github.com/acoyfellow/orbit/tree/main/docs"
+        >How it works</a
+      ><a href="https://github.com/acoyfellow/orbit/blob/main/docs/security.md"
+        >Privacy</a
       >
     </nav>
   </div>
   <div class="controls">
     <span class:live={!isFixture}
-      >{isFixture
-        ? "Checked-in fixture · not live"
-        : "Current public run"}</span
+      >{isFixture ? "Example · not checked yet" : "Just checked"}</span
     >
     <button class="run" onclick={runExample} disabled={running}
-      >{running
-        ? "Collecting public evidence…"
-        : "Collect latest changes"}</button
+      >{running ? "Checking…" : "Check for updates"}</button
     >
   </div>
 </header>
-<section class="orientation" aria-labelledby="orientation-heading">
-  <div>
-    <div class="eyebrow" id="orientation-heading">What to do here</div>
-    <p>
-      Run the example to collect recent public changes. Review what changed,
-      open the supporting sources, inspect coverage gaps, and copy any follow-up
-      worth taking elsewhere. Orbit does not execute suggestions.
-    </p>
-  </div>
-  <ol>
-    <li><b>1</b> Collect</li>
-    <li><b>2</b> Inspect sources</li>
-    <li><b>3</b> Choose a follow-up</li>
-  </ol>
-</section>
 <div class="sr-only" role="status" aria-live="polite">
   {running
-    ? "Public evidence collection in progress."
+    ? "Checking the projects for updates."
     : error
-      ? "Run failed; fixture remains visible."
+      ? "Check failed; the example is still shown."
       : isFixture
-        ? "Checked-in fixture displayed."
-        : "Public evidence run complete."}
+        ? "Showing an example. Press Check for updates to see what's new."
+        : "Done. Showing the latest updates."}
 </div>
 {#if error}<div class="error" role="alert">
     <b>Run failed.</b>
@@ -205,38 +185,190 @@
   </div>{/if}
 <main aria-busy={running}>
   {#if !isFixture}<section class="payoff">
-      <div class="eyebrow">Your latest brief is ready</div>
+      <div class="eyebrow">Done</div>
       <h2>
-        {brief.claims.length} findings from {brief.sourceReceipts.length} monitored
-        sources
+        {brief.claims.length}
+        {brief.claims.length === 1 ? "update" : "updates"} across {brief
+          .sourceReceipts.length} projects
       </h2>
       <p>
-        Open each finding’s evidence, note generated gaps, then record your
-        manual decision below.
+        Each update links to its source. Mark anything worth following up at the
+        bottom of the page.
       </p>
     </section>{/if}
   <section class="receipts">
-    <div class="eyebrow">Monitored sources and collection receipts</div>
+    <div class="eyebrow">Projects checked</div>
     <div class="receipt-grid">
       {#each brief.sourceReceipts as receipt}<article>
-          <strong>{receipt.sourceId}</strong><span>{receipt.status}</span>
+          <strong>{receipt.sourceId}</strong><span
+            >{receipt.status === "complete"
+              ? "checked"
+              : "more available"}</span
+          >
           <p>
-            {receipt.collectedItems} of at most {receipt.maxItems} items collected.
+            {receipt.collectedItems} recent {receipt.collectedItems === 1
+              ? "item"
+              : "items"}.
           </p>
-          {#if receipt.truncated}<p>
-              <b>Truncated:</b>
-              {receipt.detail}
+          {#if receipt.truncated}<p class="note">
+              Showing the {receipt.maxItems} most recent; there may be more.
             </p>{/if}<a
             href={receipt.sourceUrl}
             target="_blank"
-            rel="noopener noreferrer">Open source endpoint ↗</a
+            rel="noopener noreferrer">Open source ↗</a
           >
         </article>{/each}
     </div>
   </section>
-  <section class="run-summary" aria-labelledby="run-summary-heading">
-    <div class="eyebrow" id="run-summary-heading">Pipeline / run summary</div>
-    <dl>
+  <section>
+    <div class="eyebrow">What's new</div>
+    {#if brief.claims.length === 0}<p class="empty">
+        Nothing new since the last check.
+      </p>{/if}
+    {#each brief.claims as claim}<article>
+        <h2>{claim.text}</h2>
+        {@render EvidenceControls(claim.evidenceIds)}
+      </article>{/each}
+  </section>
+  <aside>
+    <div class="eyebrow">
+      All updates · {visibleEvidence().length}{coverageFilter
+        ? ` / ${brief.evidence.length}`
+        : ""}
+    </div>
+    {#if visibleEvidence().length === 0}<p class="empty">
+        {coverageFilter ? "Nothing here." : "Nothing found this time."}
+      </p>{/if}
+    {#each visibleEvidence() as item}<button
+        class="ledger-item"
+        class:selected={selected === item.id}
+        aria-pressed={selected === item.id}
+        onclick={() => choose(item.id)}
+        ><strong>{item.title}</strong><small
+          >{item.sourceId} · {new Date(
+            item.retrievedAt,
+          ).toLocaleDateString()}</small
+        ></button
+      >{/each}
+    {#if selectedEvidence()}{@const item = selectedEvidence()!}
+      <section
+        class="evidence-detail"
+        aria-labelledby="evidence-detail-heading"
+      >
+        <div class="eyebrow" id="evidence-detail-heading">Update details</div>
+        <h3>{item.title}</h3>
+        <p>{item.summary || "No summary from the source."}</p>
+        <dl>
+          <div>
+            <dt>From</dt>
+            <dd>{item.sourceId}</dd>
+          </div>
+          <div>
+            <dt>Date</dt>
+            <dd>{new Date(item.retrievedAt).toLocaleString()}</dd>
+          </div>
+        </dl>
+        <a
+          href={item.itemUrl ?? item.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer">Open original ↗</a
+        >
+        <details class="raw">
+          <summary>Technical details</summary>
+          <dl>
+            <div>
+              <dt>Adapter</dt>
+              <dd>{item.adapter}</dd>
+            </div>
+            <div>
+              <dt>Topics</dt>
+              <dd>{item.lanes.join(", ")}</dd>
+            </div>
+            <div>
+              <dt>Visibility</dt>
+              <dd>{item.visibility}</dd>
+            </div>
+            <div>
+              <dt>Content digest</dt>
+              <dd><code>{item.digest}</code></dd>
+            </div>
+          </dl>
+        </details>
+      </section>{/if}
+  </aside>
+  <section class="lower">
+    <div>
+      <div class="eyebrow">Quiet sources</div>
+      {#if brief.gaps.length === 0}<p class="empty">
+          Every project had something new this time.
+        </p>{/if}{#each brief.gaps as gap}<article>
+          <p>{gap.text}</p>
+          {@render EvidenceControls(gap.evidenceIds)}
+        </article>{/each}
+    </div>
+    <div>
+      <div class="eyebrow">Worth a look</div>
+      <p class="section-help">
+        Suggestions only. Orbit never acts on these for you.
+      </p>
+      {#if brief.proposals.length === 0}<p class="empty">
+          Nothing stood out this time.
+        </p>{/if}{#each brief.proposals as proposal}<article class="proposal">
+          <h3>{proposal.text}</h3>
+          {@render EvidenceControls(proposal.evidenceIds)}
+          <button
+            class="copy-suggestion"
+            onclick={() => copySuggestion(proposal.id, proposal.text)}
+          >
+            {copiedProposal === proposal.id ? "Copied" : "Copy"}
+          </button>
+        </article>{/each}
+    </div>
+  </section>
+  <section class="outcome">
+    <div class="eyebrow">Save a note</div>
+    <p>
+      Jot down what you decided about this check. Your note stays in your
+      browser — Orbit doesn't send or store it. Copy or download it to keep.
+    </p>
+    <fieldset>
+      <legend>This check was</legend><label
+        ><input
+          type="radio"
+          bind:group={outcomeStatus}
+          value="worth-follow-up"
+        /> Worth following up</label
+      ><label
+        ><input type="radio" bind:group={outcomeStatus} value="not-relevant" /> Not
+        relevant</label
+      ><label
+        ><input type="radio" bind:group={outcomeStatus} value="no-action" /> Nothing
+        to do</label
+      >
+    </fieldset>
+    <label for="outcome-summary">Note</label><textarea
+      id="outcome-summary"
+      bind:value={outcomeSummary}
+      maxlength="2000"
+      placeholder="What did you decide, and why?"
+    ></textarea>
+    <div class="outcome-actions">
+      <button onclick={copyOutcome}
+        >{copiedOutcome ? "Copied" : "Copy note"}</button
+      ><button onclick={downloadOutcome}>Download note</button>
+    </div>
+  </section>
+  <details class="technical">
+    <summary>Technical details</summary>
+    <dl class="run-summary-list">
+      <div>
+        <dt>Sources checked</dt>
+        <dd>{summary().sourceCount}</dd>
+      </div>
+      <div>
+        <dt>Time</dt>
+        <dd>{summary().durationMs} ms</dd>
+      </div>
       <div>
         <dt>Adapters</dt>
         <dd>
@@ -246,40 +378,18 @@
                 ? "GitHub releases"
                 : adapter.toUpperCase(),
             )
-            .join(", ") || "Fixture metadata unavailable"}
+            .join(", ") || "—"}
         </dd>
-      </div>
-      <div>
-        <dt>Sources</dt>
-        <dd>{summary().sourceCount}</dd>
-      </div>
-      <div>
-        <dt>Timing</dt>
-        <dd>{summary().durationMs} ms</dd>
       </div>
       <div>
         <dt>Lenses</dt>
-        <dd>
-          {summary().lenses.join(" → ") || "Fixture metadata unavailable"}
-        </dd>
-      </div>
-      <div>
-        <dt>Outputs</dt>
-        <dd>
-          {summary().evidenceCount} evidence · {summary().claimCount} claims · {summary()
-            .gapCount} gaps · {summary().proposalCount} proposals
-        </dd>
+        <dd>{summary().lenses.join(" → ") || "—"}</dd>
       </div>
     </dl>
-  </section>
-  {#if coverage().lanes.length > 0}
-    <section class="coverage" aria-labelledby="coverage-heading">
-      <div class="eyebrow" id="coverage-heading">
-        Collected evidence distribution
-      </div>
-      <p>
-        Counts show coverage only—not quality or support. Cells are lossy;
-        select one to filter and inspect its evidence.
+    {#if coverage().lanes.length > 0}
+      <p class="matrix-help">
+        Items found per topic and source type. Counts only — not a quality
+        score. Pick a cell to filter the list above.
       </p>
       <div class="matrix" style={`--columns: ${coverage().adapters.length}`}>
         <span aria-hidden="true"></span>
@@ -293,163 +403,25 @@
             <button
               class:active={coverageFilter?.lane === lane &&
                 coverageFilter?.adapter === adapter}
-              aria-label={`${lane}, ${adapter}: ${cell.count} evidence items${cell.count === 0 ? ", empty gap" : ""}`}
+              aria-label={`${lane}, ${adapter}: ${cell.count} items${cell.count === 0 ? ", none" : ""}`}
               aria-pressed={coverageFilter?.lane === lane &&
                 coverageFilter?.adapter === adapter}
               onclick={() => filterCoverage(lane, adapter)}
-              >{cell.count === 0 ? "Empty" : cell.count}</button
+              >{cell.count === 0 ? "—" : cell.count}</button
             >
           {/each}
         {/each}
       </div>
       {#if coverageFilter}<button
           class="clear-filter"
-          onclick={() => (coverageFilter = null)}>Show all evidence</button
+          onclick={() => (coverageFilter = null)}>Show all</button
         >{/if}
-    </section>
-  {/if}
-  <section>
-    <div class="eyebrow">What changed</div>
-    {#if brief.claims.length === 0}<p class="empty">
-        No changes matched this brief.
-      </p>{/if}
-    {#each brief.claims as claim}<article>
-        <h2>{claim.text}</h2>
-        {@render EvidenceControls(claim.evidenceIds)}
-      </article>{/each}
-  </section>
-  <aside>
-    <div class="eyebrow">
-      Sources · {visibleEvidence().length}{coverageFilter
-        ? ` / ${brief.evidence.length}`
-        : ""}
-    </div>
-    {#if visibleEvidence().length === 0}<p class="empty">
-        {coverageFilter
-          ? "This declared coverage cell is empty."
-          : "No evidence was collected for this run."}
-      </p>{/if}
-    {#each visibleEvidence() as item}<button
-        class="ledger-item"
-        class:selected={selected === item.id}
-        aria-pressed={selected === item.id}
-        onclick={() => choose(item.id)}
-        ><strong>{item.title}</strong><small
-          >{item.sourceId} · {item.adapter} · {item.lanes.join(", ")} · {item.visibility}</small
-        ><code>{item.digest.slice(0, 18)}…</code></button
-      >{/each}
-    {#if selectedEvidence()}{@const item = selectedEvidence()!}
-      <section
-        class="evidence-detail"
-        aria-labelledby="evidence-detail-heading"
-      >
-        <div class="eyebrow" id="evidence-detail-heading">
-          Selected evidence
-        </div>
-        <h3>{item.title}</h3>
-        <p>{item.summary || "No summary supplied."}</p>
-        <dl>
-          <div>
-            <dt>Source</dt>
-            <dd>{item.sourceId}</dd>
-          </div>
-          <div>
-            <dt>Declared lanes</dt>
-            <dd>{item.lanes.join(", ")}</dd>
-          </div>
-          <div>
-            <dt>Adapter</dt>
-            <dd>{item.adapter}</dd>
-          </div>
-          <div>
-            <dt>Retrieved</dt>
-            <dd>{new Date(item.retrievedAt).toLocaleString()}</dd>
-          </div>
-          <div>
-            <dt>Visibility</dt>
-            <dd>{item.visibility}</dd>
-          </div>
-          <div>
-            <dt>Digest</dt>
-            <dd><code>{item.digest}</code></dd>
-          </div>
-        </dl>
-        <a
-          href={item.itemUrl ?? item.sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          >Open item (or endpoint when no item link exists) ↗</a
-        >
-      </section>{/if}
-  </aside>
-  <section class="lower">
-    <div>
-      <div class="eyebrow">Missing coverage</div>
-      {#if brief.gaps.length === 0}<p class="empty">
-          This lens generated no gaps from the collected evidence; this is not
-          proof that no gaps exist.
-        </p>{/if}{#each brief.gaps as gap}<article>
-          <p>{gap.text}</p>
-          {@render EvidenceControls(gap.evidenceIds)}
-        </article>{/each}
-    </div>
-    <div>
-      <div class="eyebrow">Suggested follow-ups</div>
-      <p class="section-help">
-        Suggestions are review notes only. Orbit never executes them.
-      </p>
-      {#if brief.proposals.length === 0}<p class="empty">
-          No follow-ups were suggested.
-        </p>{/if}{#each brief.proposals as proposal}<article class="proposal">
-          <span>Review note · not executed</span>
-          <h3>{proposal.text}</h3>
-          {@render EvidenceControls(proposal.evidenceIds)}
-          <button
-            class="copy-suggestion"
-            onclick={() => copySuggestion(proposal.id, proposal.text)}
-          >
-            {copiedProposal === proposal.id ? "Copied" : "Copy suggestion"}
-          </button>
-        </article>{/each}
-    </div>
-  </section>
-  <section class="outcome">
-    <div class="eyebrow">Record your manual review outcome</div>
-    <p>
-      This creates valid Outcome JSON tied to <code>{brief.runId}</code>. It is
-      only copied or downloaded in your browser; Orbit does not send or store
-      it.
-    </p>
-    <fieldset>
-      <legend>Decision</legend><label
-        ><input
-          type="radio"
-          bind:group={outcomeStatus}
-          value="worth-follow-up"
-        /> Worth follow-up</label
-      ><label
-        ><input type="radio" bind:group={outcomeStatus} value="not-relevant" /> Not
-        relevant</label
-      ><label
-        ><input type="radio" bind:group={outcomeStatus} value="no-action" /> No action</label
-      >
-    </fieldset>
-    <label for="outcome-summary">Review note</label><textarea
-      id="outcome-summary"
-      bind:value={outcomeSummary}
-      maxlength="2000"
-      placeholder="Why did you make this decision?"
-    ></textarea>
-    <div class="outcome-actions">
-      <button onclick={copyOutcome}
-        >{copiedOutcome ? "Copied" : "Copy Outcome JSON"}</button
-      ><button onclick={downloadOutcome}>Download Outcome JSON</button>
-    </div>
-  </section>
+    {/if}
+  </details>
 </main>
 <footer>
-  Completed {new Date(brief.completedAt).toLocaleString()} ·
-  <code>{brief.runId}</code> · No actions executed
+  Checked {new Date(brief.completedAt).toLocaleString()} ·
+  <code>{brief.runId}</code>
 </footer>
 
 {#snippet EvidenceControls(ids: string[])}
@@ -478,8 +450,7 @@
   header,
   main,
   footer,
-  .error,
-  .orientation {
+  .error {
     max-width: 1120px;
     margin: auto;
   }
@@ -547,47 +518,6 @@
     opacity: 0.58;
     cursor: wait;
   }
-  .orientation {
-    display: grid;
-    grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
-    gap: 32px;
-    padding: 22px 24px;
-    border-bottom: 1px solid #c8cbc5;
-    background: #f8f7f2;
-  }
-  .orientation p {
-    max-width: 680px;
-    margin: 7px 0 0;
-    color: #4f5c56;
-    font-size: 15px;
-  }
-  .orientation ol {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 16px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    color: #58645f;
-    font-size: 12px;
-  }
-  .orientation li {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-  }
-  .orientation li b {
-    display: grid;
-    width: 22px;
-    height: 22px;
-    place-items: center;
-    border: 1px solid #aab2ab;
-    border-radius: 999px;
-    color: #173f30;
-    font-size: 10px;
-  }
   .error {
     padding: 14px 24px;
     background: #f5d6cf;
@@ -625,15 +555,34 @@
     font-size: 10px;
     font-weight: 800;
   }
-  .run-summary,
-  .coverage {
+  .technical {
     grid-column: 1/-1;
-    border-bottom: 1px solid #a8aea7;
-    padding-bottom: 20px;
-  }
-  .coverage p {
-    margin: 8px 0 14px;
+    border-top: 1px solid #c8cbc5;
+    padding-top: 18px;
     color: #58635e;
+  }
+  .technical > summary {
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: #67716c;
+  }
+  .matrix-help {
+    margin: 12px 0 14px;
+    color: #58635e;
+    font-size: 13px;
+  }
+  .note {
+    color: #67716c;
+    font-size: 12px;
+  }
+  .raw {
+    margin-top: 14px;
+  }
+  .raw > summary {
+    cursor: pointer;
+    font-size: 11px;
+    color: #67716c;
   }
   .matrix {
     display: grid;
@@ -668,21 +617,22 @@
     margin-top: 10px;
     padding: 7px 12px;
   }
-  .run-summary dl {
+  .run-summary-list {
     display: flex;
     flex-wrap: wrap;
     gap: 12px 28px;
+    margin: 14px 0 4px;
   }
-  .run-summary dl div {
+  .run-summary-list div {
     min-width: 120px;
   }
-  .run-summary dt,
+  .run-summary-list dt,
   .evidence-detail dt {
     font-size: 10px;
     text-transform: uppercase;
     color: #67716c;
   }
-  .run-summary dd,
+  .run-summary-list dd,
   .evidence-detail dd {
     margin: 2px 0 0;
   }
@@ -775,14 +725,6 @@
     color: #67716c;
     font-size: 12px;
   }
-  .proposal span {
-    font-size: 10px;
-    text-transform: uppercase;
-    background: #e2e4df;
-    color: #53605a;
-    padding: 4px 7px;
-    border-radius: 2px;
-  }
   .copy-suggestion {
     margin-top: 12px;
     padding: 7px 10px;
@@ -857,14 +799,6 @@
     .controls {
       align-items: stretch;
     }
-    .orientation {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-    .orientation ol {
-      justify-content: flex-start;
-      flex-wrap: wrap;
-    }
     .controls span {
       text-align: left;
     }
@@ -878,11 +812,7 @@
     .receipt-grid {
       grid-template-columns: 1fr;
     }
-    .run-summary,
-    .coverage {
-      grid-column: auto;
-    }
-    .run-summary dl {
+    .run-summary-list {
       display: grid;
       grid-template-columns: 1fr 1fr;
     }
