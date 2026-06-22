@@ -35,3 +35,9 @@ review notes 2, not executed
 - A reviewed outcome was validated and appended to a local JSONL ledger.
 
 No private source, credential, account ID, mutable approval action, or internal AX configuration is present in the public repository or proof payload.
+
+## UX alignment pass (deploy c5f36df8)
+
+- `orbit.coey.dev` live run rendered the outcome-led header, exact monitored sources, post-run payoff (`3 findings from 3 monitored sources`), per-source collection receipts (3), "Collected evidence distribution", honest generated-gaps wording, and the browser-only Outcome controls.
+- Browser-confirmed hydration: `h1`, CTA "Collect latest changes", `.payoff`, 3 `.receipt-grid` cards, 3 outcome radios, outcome textarea.
+- Exported Outcome JSON for live `run_b0ad7a8d3461b19e` validates against `validateOutcome`; legacy `accepted`/malformed runId are rejected.
