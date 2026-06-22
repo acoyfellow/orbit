@@ -64,7 +64,7 @@ A narrow Streamable HTTP-style MCP endpoint is available at `POST /mcp`. It supp
 
 The shipped public adapters have no credential input. The GitHub releases adapter derives the versioned `api.github.com/repos/{owner}/{repo}/releases` endpoint from validated owner/repository names, identifies Orbit with a `User-Agent`, and stays within GitHub's unauthenticated public rate limit. Orbit caps request bodies while streaming (including bodies without `Content-Length`), caps source response streams before decoding, strictly validates specs and Markdown briefs, never writes response headers to evidence, and proposes actions rather than executing them. Baseline browser security headers are applied by the Hono app. Authentication, DNS-resolution/egress controls, retention, and credential isolation remain deployment responsibilities; public examples use public sources and deterministic lenses.
 
-See [Security](docs/security.md) and [Architecture](docs/architecture.md).
+See [Security](docs/security.md), [Architecture](docs/architecture.md), and the [deployed proof receipt](docs/proof.md).
 
 ## Status
 
