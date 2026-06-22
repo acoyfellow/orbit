@@ -9,6 +9,8 @@
       "id": "ev_example",
       "sourceId": "fixture",
       "sourceUrl": "https://example.com/",
+      "adapter": "json",
+      "lanes": ["illustrative"],
       "retrievedAt": "2026-06-22T00:00:00.000Z",
       "visibility": "public",
       "title": "Illustrative evidence",

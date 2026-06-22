@@ -36,6 +36,8 @@ export async function collectGitHubReleases(
         id: `ev_${d.slice(0, 16)}`,
         sourceId: source.id,
         sourceUrl,
+        adapter: source.type,
+        lanes: source.lanes,
         itemUrl,
         retrievedAt,
         visibility: "public" as const,

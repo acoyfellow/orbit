@@ -39,6 +39,7 @@ test("collects GitHub releases with the versioned unauthenticated API", async ()
         owner: "example",
         repo: "tool",
         maxItems: 1,
+        lanes: ["test"],
       },
     ],
     lenses: [
@@ -57,7 +58,43 @@ test("collects GitHub releases with the versioned unauthenticated API", async ()
   assert.equal(request?.headers.get("authorization"), null);
   assert.equal(brief.evidence[0]?.title, "v1.2.3");
   assert.equal(brief.evidence[0]?.sourceId, "tool");
+  assert.equal(brief.evidence[0]?.adapter, "github-releases");
+  assert.deepEqual(brief.evidence[0]?.lanes, ["test"]);
   assert.match(brief.evidence[0]?.summary ?? "", /agent tooling/);
+});
+
+test("rejects missing, duplicate, or excessive source lanes", async () => {
+  const spec = {
+    version: 1,
+    name: "lanes",
+    lenses: [
+      { type: "filter-summary", maxClaims: 1 },
+      { type: "evidence-actions", maxProposals: 0 },
+    ],
+    limits: { maxSources: 1, maxBytesPerSource: 1000, timeoutMs: 1000 },
+  };
+  for (const lanes of [
+    undefined,
+    [],
+    ["same", "same"],
+    ["1", "2", "3", "4", "5", "6"],
+  ]) {
+    await assert.rejects(
+      run({
+        ...spec,
+        sources: [
+          {
+            id: "x",
+            type: "json",
+            url: "https://example.com",
+            maxItems: 1,
+            ...(lanes === undefined ? {} : { lanes }),
+          },
+        ],
+      }),
+      /source lanes|unknown property/,
+    );
+  }
 });
 
 test("rejects invalid GitHub repository names and unknown adapter fields", async () => {
@@ -80,6 +117,7 @@ test("rejects invalid GitHub repository names and unknown adapter fields", async
           owner: "bad/owner",
           repo: "tool",
           maxItems: 1,
+          lanes: ["test"],
         },
       ],
     }),
@@ -96,6 +134,7 @@ test("rejects invalid GitHub repository names and unknown adapter fields", async
           repo: "tool",
           url: "https://example.com",
           maxItems: 1,
+          lanes: ["test"],
         },
       ],
     }),
@@ -113,7 +152,13 @@ test("runs bounded JSON into linked output", async () => {
     version: 1,
     name: "test",
     sources: [
-      { id: "j", type: "json", url: "https://example.com/a.json", maxItems: 1 },
+      {
+        id: "j",
+        type: "json",
+        url: "https://example.com/a.json",
+        maxItems: 1,
+        lanes: ["test"],
+      },
     ],
     lenses: [
       { type: "filter-summary", include: [], maxClaims: 2 },
@@ -139,7 +184,7 @@ for (const url of [
       run({
         version: 1,
         name: "x",
-        sources: [{ id: "x", type: "json", url, maxItems: 1 }],
+        sources: [{ id: "x", type: "json", url, maxItems: 1, lanes: ["test"] }],
         lenses: [
           { type: "filter-summary", maxClaims: 1 },
           { type: "evidence-actions", maxProposals: 1 },
@@ -189,7 +234,13 @@ test("stops reading a chunked source once its byte cap is exceeded", async () =>
       version: 1,
       name: "stream",
       sources: [
-        { id: "x", type: "json", url: "https://example.com", maxItems: 1 },
+        {
+          id: "x",
+          type: "json",
+          url: "https://example.com",
+          maxItems: 1,
+          lanes: ["test"],
+        },
       ],
       lenses: [
         { type: "filter-summary", maxClaims: 1 },
@@ -213,7 +264,13 @@ test("does not follow source redirects", async () => {
       version: 1,
       name: "redirect",
       sources: [
-        { id: "x", type: "json", url: "https://example.com", maxItems: 1 },
+        {
+          id: "x",
+          type: "json",
+          url: "https://example.com",
+          maxItems: 1,
+          lanes: ["test"],
+        },
       ],
       lenses: [
         { type: "filter-summary", maxClaims: 1 },

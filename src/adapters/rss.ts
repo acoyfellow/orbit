@@ -39,6 +39,8 @@ export async function collectRss(
         id: `ev_${d.slice(0, 16)}`,
         sourceId: source.id,
         sourceUrl: source.url,
+        adapter: source.type,
+        lanes: source.lanes,
         itemUrl,
         retrievedAt,
         visibility: "public" as const,

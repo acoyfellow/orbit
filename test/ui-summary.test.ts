@@ -18,8 +18,20 @@ const spec: RunSpec = {
   version: 1,
   name: "test",
   sources: [
-    { id: "json", type: "json", url: "https://example.com/a", maxItems: 1 },
-    { id: "rss", type: "rss", url: "https://example.com/b", maxItems: 1 },
+    {
+      id: "json",
+      type: "json",
+      url: "https://example.com/a",
+      maxItems: 1,
+      lanes: ["test"],
+    },
+    {
+      id: "rss",
+      type: "rss",
+      url: "https://example.com/b",
+      maxItems: 1,
+      lanes: ["test"],
+    },
   ],
   lenses: [
     { type: "filter-summary", maxClaims: 2 },
@@ -58,6 +70,8 @@ test("summarizeRun derives fixture source count and clamps negative timing", () 
         id: "e1",
         sourceId: "source",
         sourceUrl: "https://example.com",
+        adapter: "json" as const,
+        lanes: ["test"],
         retrievedAt: brief.startedAt,
         visibility: "public" as const,
         title: "Evidence",

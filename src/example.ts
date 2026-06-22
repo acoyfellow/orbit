@@ -11,6 +11,7 @@ export const publicExample: RunSpec = {
       owner: "openai",
       repo: "openai-agents-js",
       maxItems: 3,
+      lanes: ["agent SDKs"],
     },
     {
       id: "model-context-protocol-typescript-sdk",
@@ -18,12 +19,14 @@ export const publicExample: RunSpec = {
       owner: "modelcontextprotocol",
       repo: "typescript-sdk",
       maxItems: 3,
+      lanes: ["protocol SDKs"],
     },
     {
       id: "cloudflare-developer-platform",
       type: "rss",
       url: "https://blog.cloudflare.com/rss/",
       maxItems: 3,
+      lanes: ["developer platform"],
     },
   ],
   lenses: [

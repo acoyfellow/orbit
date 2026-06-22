@@ -1,9 +1,13 @@
 <script lang="ts">
-  import type { Brief, Evidence, RunSpec } from "./contracts.js";
+  import type { Brief, Evidence, RunSpec, Source } from "./contracts.js";
+  import { buildCoverageMatrix } from "./coverage.js";
   let { initialBrief }: { initialBrief: Brief } = $props();
   let brief = $state(initialBrief);
   let runSpec = $state<RunSpec | undefined>();
   let selected = $state<string | null>(brief.evidence[0]?.id ?? null);
+  let coverageFilter = $state<{ lane: string; adapter: Source["type"] } | null>(
+    null,
+  );
   let running = $state(false);
   let error = $state<string | null>(null);
   let isFixture = $state(true);
@@ -13,6 +17,22 @@
       .filter((item): item is Evidence => Boolean(item));
   const selectedEvidence = () =>
     brief.evidence.find((item) => item.id === selected);
+  const coverage = () => buildCoverageMatrix(brief, runSpec);
+  const visibleEvidence = () =>
+    coverageFilter
+      ? brief.evidence.filter(
+          (item) =>
+            item.adapter === coverageFilter?.adapter &&
+            item.lanes.includes(coverageFilter.lane),
+        )
+      : brief.evidence;
+  function filterCoverage(lane: string, adapter: Source["type"]) {
+    coverageFilter = { lane, adapter };
+    selected =
+      brief.evidence.find(
+        (item) => item.adapter === adapter && item.lanes.includes(lane),
+      )?.id ?? null;
+  }
   // Keep this projection inside the component: svelte-hono bundles component
   // dependencies independently for SSR and hydration, while the pure helper is
   // retained separately for contract tests.
@@ -61,6 +81,7 @@
       brief = body as Brief;
       runSpec = spec;
       selected = brief.evidence[0]?.id ?? null;
+      coverageFilter = null;
       isFixture = false;
     } catch (cause) {
       error = cause instanceof Error ? cause.message : "Run failed.";
@@ -141,6 +162,42 @@
       </div>
     </dl>
   </section>
+  {#if coverage().lanes.length > 0}
+    <section class="coverage" aria-labelledby="coverage-heading">
+      <div class="eyebrow" id="coverage-heading">
+        Evidence coverage · grouped by operator-declared lane × adapter
+      </div>
+      <p>
+        Counts show coverage only—not quality or support. Cells are lossy;
+        select one to filter and inspect its evidence.
+      </p>
+      <div class="matrix" style={`--columns: ${coverage().adapters.length}`}>
+        <span aria-hidden="true"></span>
+        {#each coverage().adapters as adapter}<strong>{adapter}</strong>{/each}
+        {#each coverage().lanes as lane}
+          <strong>{lane}</strong>
+          {#each coverage().adapters as adapter}
+            {@const cell = coverage().cells.find(
+              (item) => item.lane === lane && item.adapter === adapter,
+            )!}
+            <button
+              class:active={coverageFilter?.lane === lane &&
+                coverageFilter?.adapter === adapter}
+              aria-label={`${lane}, ${adapter}: ${cell.count} evidence items${cell.count === 0 ? ", empty gap" : ""}`}
+              aria-pressed={coverageFilter?.lane === lane &&
+                coverageFilter?.adapter === adapter}
+              onclick={() => filterCoverage(lane, adapter)}
+              >{cell.count === 0 ? "Empty" : cell.count}</button
+            >
+          {/each}
+        {/each}
+      </div>
+      {#if coverageFilter}<button
+          class="clear-filter"
+          onclick={() => (coverageFilter = null)}>Show all evidence</button
+        >{/if}
+    </section>
+  {/if}
   <section>
     <div class="eyebrow">Claims</div>
     {#if brief.claims.length === 0}<p class="empty">
@@ -152,17 +209,23 @@
       </article>{/each}
   </section>
   <aside>
-    <div class="eyebrow">Evidence ledger · {brief.evidence.length}</div>
-    {#if brief.evidence.length === 0}<p class="empty">
-        No evidence was collected for this run.
+    <div class="eyebrow">
+      Evidence ledger · {visibleEvidence().length}{coverageFilter
+        ? ` / ${brief.evidence.length}`
+        : ""}
+    </div>
+    {#if visibleEvidence().length === 0}<p class="empty">
+        {coverageFilter
+          ? "This declared coverage cell is empty."
+          : "No evidence was collected for this run."}
       </p>{/if}
-    {#each brief.evidence as item}<button
+    {#each visibleEvidence() as item}<button
         class="ledger-item"
         class:selected={selected === item.id}
         aria-pressed={selected === item.id}
         onclick={() => choose(item.id)}
         ><strong>{item.title}</strong><small
-          >{item.sourceId} · {item.visibility}</small
+          >{item.sourceId} · {item.adapter} · {item.lanes.join(", ")} · {item.visibility}</small
         ><code>{item.digest.slice(0, 18)}…</code></button
       >{/each}
     {#if selectedEvidence()}{@const item = selectedEvidence()!}
@@ -179,6 +242,14 @@
           <div>
             <dt>Source</dt>
             <dd>{item.sourceId}</dd>
+          </div>
+          <div>
+            <dt>Declared lanes</dt>
+            <dd>{item.lanes.join(", ")}</dd>
+          </div>
+          <div>
+            <dt>Adapter</dt>
+            <dd>{item.adapter}</dd>
           </div>
           <div>
             <dt>Retrieved</dt>
@@ -318,10 +389,48 @@
     grid-template-columns: 2fr 1fr;
     gap: 34px;
   }
-  .run-summary {
+  .run-summary,
+  .coverage {
     grid-column: 1/-1;
     border-bottom: 1px solid #a8aea7;
     padding-bottom: 20px;
+  }
+  .coverage p {
+    margin: 8px 0 14px;
+    color: #58635e;
+  }
+  .matrix {
+    display: grid;
+    grid-template-columns: minmax(110px, 1fr) repeat(
+        var(--columns),
+        minmax(80px, 1fr)
+      );
+    gap: 5px;
+    overflow-x: auto;
+  }
+  .matrix > strong {
+    padding: 8px;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
+  .matrix button,
+  .clear-filter {
+    min-height: 40px;
+    border: 1px solid #aab2ab;
+    background: #fff;
+    color: #173f30;
+    cursor: pointer;
+  }
+  .matrix button.active {
+    background: #173f30;
+    color: #fff;
+  }
+  .matrix button:has(:not(*)) {
+    font-style: italic;
+  }
+  .clear-filter {
+    margin-top: 10px;
+    padding: 7px 12px;
   }
   .run-summary dl {
     display: flex;
@@ -475,7 +584,8 @@
       grid-template-columns: minmax(0, 1fr);
       gap: 28px;
     }
-    .run-summary {
+    .run-summary,
+    .coverage {
       grid-column: auto;
     }
     .run-summary dl {

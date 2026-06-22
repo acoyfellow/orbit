@@ -1,5 +1,10 @@
 export type Visibility = "public" | "private";
-export interface JsonSource {
+export type Lane = string;
+interface SourceGrouping {
+  /** Operator-declared, bounded grouping labels; not inferred quality. */
+  lanes: Lane[];
+}
+export interface JsonSource extends SourceGrouping {
   id: string;
   type: "json";
   url: string;
@@ -7,13 +12,13 @@ export interface JsonSource {
   titlePath?: string;
   summaryPath?: string;
 }
-export interface RssSource {
+export interface RssSource extends SourceGrouping {
   id: string;
   type: "rss";
   url: string;
   maxItems: number;
 }
-export interface GitHubReleasesSource {
+export interface GitHubReleasesSource extends SourceGrouping {
   id: string;
   type: "github-releases";
   owner: string;
@@ -41,6 +46,8 @@ export interface Evidence {
   id: string;
   sourceId: string;
   sourceUrl: string;
+  adapter: Source["type"];
+  lanes: Lane[];
   itemUrl?: string;
   retrievedAt: string;
   visibility: Visibility;

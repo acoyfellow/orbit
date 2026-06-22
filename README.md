@@ -20,7 +20,7 @@ That example monitors releases from real agent/tooling repositories and a public
 - one serializable run specification;
 - first-class GitHub releases plus generic public JSON and RSS adapters;
 - deterministic summary/filter and evidence-to-action lenses;
-- content-addressed evidence with explicit provenance;
+- content-addressed evidence with explicit provenance and bounded operator-declared lanes;
 - JSON and Markdown briefs;
 - a small CLI, HTTP API, Svelte review surface, read-only MCP endpoint, agent skill and `loops.yaml` example;
 - Cloudflare-ready D1/R2/Workers AI/Workflow boundaries without requiring them for the local example;
@@ -56,7 +56,7 @@ loops run orbit-public-web   # one dogfood run
 loops watch                  # honor the checked-in cron schedule
 ```
 
-My AX can connect to `https://orbit.coey.dev/mcp` as a read-only MCP server, call `get_example_spec` then `run_public_spec`, and retain the returned brief or Markdown without importing Orbit code. The portable `createHttpApp()` disables execution by default: a deployment must explicitly inject a runner that enforces its authentication and spec policy. The public Worker injects a runner that accepts only the exact checked-in example. The review page starts with a clearly labelled illustrative fixture; **Run public example** fetches the checked-in spec from `GET /api/example`, submits it to `POST /api/runs`, and replaces the fixture with current public evidence. Its compact run summary distinguishes unavailable fixture pipeline metadata from live adapter/source/lens data, and reports timing and output counts. Claims, visible gaps, and proposed actions all link to a selected evidence detail with summary, source, retrieval time, visibility, digest, and a separate public-source link.
+My AX can connect to `https://orbit.coey.dev/mcp` as a read-only MCP server, call `get_example_spec` then `run_public_spec`, and retain the returned brief or Markdown without importing Orbit code. The portable `createHttpApp()` disables execution by default: a deployment must explicitly inject a runner that enforces its authentication and spec policy. The public Worker injects a runner that accepts only the exact checked-in example. The review page starts with a clearly labelled illustrative fixture; **Run public example** fetches the checked-in spec from `GET /api/example`, submits it to `POST /api/runs`, and replaces the fixture with current public evidence. Its compact run summary distinguishes unavailable fixture pipeline metadata from live adapter/source/lens data, and reports timing and output counts. A compact coverage matrix groups counts and empty gaps by explicitly labelled, operator-declared **lane × adapter** dimensions; selecting a cell filters the ledger and drills into evidence. Coverage is intentionally separate from quality/support and is not a score. Claims, visible gaps, and proposed actions all link to a selected evidence detail with summary, source, retrieval time, visibility, digest, and a separate public-source link. See the [research note](docs/research/quality-diversity-coverage.md) for paper claims and the narrower Orbit inference.
 
 A narrow Streamable HTTP-style MCP endpoint is available at `POST /mcp`. It supports `initialize`, `tools/list`, and `tools/call` for `get_example_spec`, `run_public_spec`, and `render_markdown`. These tools only discover, collect bounded public sources, or format a supplied brief—there are no credentials, persistence, approvals, or action tools.
 

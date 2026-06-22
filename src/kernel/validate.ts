@@ -27,6 +27,16 @@ const stringArray = (value: unknown, label: string) => {
   if (!Array.isArray(value) || value.some((item) => typeof item !== "string"))
     throw new Error(`invalid ${label}`);
 };
+const lanes = (value: unknown) => {
+  stringArray(value, "source lanes");
+  if (
+    (value as string[]).length < 1 ||
+    (value as string[]).length > 5 ||
+    new Set(value as string[]).size !== (value as string[]).length
+  )
+    throw new Error("invalid source lanes");
+  for (const lane of value as string[]) text(lane, "source lane", 40);
+};
 
 export function validateSpec(value: unknown): asserts value is RunSpec {
   if (!object(value)) throw new Error("spec must be an object");
@@ -52,14 +62,19 @@ export function validateSpec(value: unknown): asserts value is RunSpec {
   const ids = new Set<string>();
   for (const source of value.sources) {
     if (!object(source)) throw new Error("invalid source");
-    const common = ["id", "type", "url", "maxItems"];
+    const common = ["id", "type", "url", "maxItems", "lanes"];
     if (source.type === "json")
       exact(source, [...common, "titlePath", "summaryPath"], "source");
     else if (source.type === "rss") exact(source, common, "source");
     else if (source.type === "github-releases")
-      exact(source, ["id", "type", "owner", "repo", "maxItems"], "source");
+      exact(
+        source,
+        ["id", "type", "owner", "repo", "maxItems", "lanes"],
+        "source",
+      );
     else throw new Error("invalid source type");
     text(source.id, "source id", 100);
+    lanes(source.lanes);
     if (ids.has(source.id as string)) throw new Error("duplicate source id");
     ids.add(source.id as string);
     if (source.type === "github-releases") {
@@ -128,6 +143,8 @@ export function validateBrief(value: unknown): asserts value is Brief {
         "id",
         "sourceId",
         "sourceUrl",
+        "adapter",
+        "lanes",
         "itemUrl",
         "retrievedAt",
         "visibility",
@@ -146,8 +163,12 @@ export function validateBrief(value: unknown): asserts value is Brief {
       "digest",
     ])
       text(evidence[key], `evidence ${key}`);
+    lanes(evidence.lanes);
     if (
       typeof evidence.summary !== "string" ||
+      !["json", "rss", "github-releases"].includes(
+        evidence.adapter as string,
+      ) ||
       !["public", "private"].includes(evidence.visibility as string)
     )
       throw new Error("invalid evidence fields");
